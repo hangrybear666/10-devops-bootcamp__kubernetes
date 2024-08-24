@@ -90,6 +90,13 @@ if [ $INSTALL_DOCKER_FLAG == "y" ]
   sudo systemctl start docker
 EOF
 else
+  # in case minikube uninstallation has removed user, we have to reset the docker group
+  ssh $SERVICE_USER@$REMOTE_ADDRESS <<EOF
+
+  # set sudo credentials for subsequent commands
+  echo $SERVICE_USER_PW | sudo -S ls
+  sudo usermod -aG docker \$USER && newgrp docker
+EOF
   echo "Docker installation skipped due to user input ..."
 fi
 
@@ -97,6 +104,9 @@ fi
 ssh $SERVICE_USER@$REMOTE_ADDRESS <<EOF
 # set sudo credentials for subsequent commands
 echo $SERVICE_USER_PW | sudo -S ls
+
+cd ~
+mkdir k8s
 
 # download minikube debian package 
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
@@ -109,8 +119,4 @@ minikube start
 echo 'alias kubectl="minikube kubectl --"' >> ~/.bashrc
 source ~/.bashrc
 
-EOF
-
-ssh $SERVICE_USER@$REMOTE_ADDRESS <<EOF
-kubectl -- get po -A
 EOF

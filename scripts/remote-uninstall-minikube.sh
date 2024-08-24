@@ -15,7 +15,7 @@ source ../.env
 PUBLIC_KEY=$(cat $HOME/.ssh/id_rsa.pub)
 
 # ask if docker should be installed beforehand
-read -p "Should docker be uniinstalled as well? ( y / n ): " UNINSTALL_DOCKER_FLAG
+read -p "Should docker be uninstalled as well? ( y / n ): " UNINSTALL_DOCKER_FLAG
 
 ssh $ROOT_USER@$REMOTE_ADDRESS <<EOF
 
