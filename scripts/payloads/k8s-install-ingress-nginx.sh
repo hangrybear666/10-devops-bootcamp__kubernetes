@@ -16,15 +16,15 @@ kubectl create deployment web --image=gcr.io/google-samples/hello-app:1.0
 kubectl create deployment web2 --image=gcr.io/google-samples/hello-app:2.0
 
 kubectl expose deployment web --type=NodePort --port=8080
-kubectl expose deployment web2 --port=8080 --type=NodePort
+kubectl expose deployment web2 --type=NodePort --port=8080 
 
 kubectl apply -f nginx-test-ingress.yaml
 
+#kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec": {"type": "LoadBalancer"}}'
 #kubectl get ingress
+#kubectl get svc -n ingress-nginx
 sleep 8
 SERVICE_URL=$(minikube service web --url)
 curl $SERVICE_URL
 curl --resolve "$REMOTE_ADDRESS:80:$( minikube ip )" -i http://$REMOTE_ADDRESS
 curl --resolve "$REMOTE_ADDRESS:80:$( minikube ip )" -i http://$REMOTE_ADDRESS/v2
-
-#curl --resolve "$REMOTE_ADDRESS:80:192.168.49.2" -i http://$REMOTE_ADDRESS
