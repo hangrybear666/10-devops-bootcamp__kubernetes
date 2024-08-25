@@ -36,7 +36,13 @@ The main projects are:
 
 ## Usage (Demo Projects)
 
-0. First of all, we want to setup ArgoCD to use GitOps principles for writing declarative configuration, versioning, storing and running our k8s cluster 
+## Usage (Exercises)
+
+TODO
+
+## Usage (Bonus Setup)
+
+1. First of all, we want to setup ArgoCD to use GitOps principles for writing declarative configuration, versioning, storing and running our k8s cluster 
 
     See https://argo-cd.readthedocs.io/en/stable/getting_started/
 
@@ -47,7 +53,7 @@ The main projects are:
     ./remote-setup-ArgoCD.sh
     ```
 
-1. We also want to setup ingress-nginx for minikube to handle incoming traffic 
+2. We also want to setup ingress-nginx for minikube to handle incoming traffic 
 
     See https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
 
@@ -56,6 +62,3 @@ The main projects are:
     ./remote-setup-ingress-nginx.sh
     ```
     
-## Usage (Exercises)
-
-TODO
