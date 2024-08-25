@@ -36,6 +36,30 @@ The main projects are:
 
 ## Usage (Demo Projects)
 
+1. Deploy a simple application with ConfigMap, (unencrypted/insecure) Secret and Service in k8s cluster
+
+    ```
+    # SETUP
+    kubectl apply -f k8s/mongo-secret.yaml
+    kubectl apply -f k8s/mongodb.yaml
+    kubectl apply -f k8s/mongo-configmap.yaml
+    kubectl apply -f k8s/mongo-express.yaml
+    # access minicube-ip:30000 in the browser or run
+    minikube service mongo-express-service
+    #default credentials for mongo-express are admin:pass
+    
+    # INFO
+    MONGO_POD=$(kubectl get pods --no-headers | grep "mongodb-deployment" | awk '{print $1}')
+    EXPRESS_POD=$(kubectl get pods --no-headers | grep "mongo-express" | awk '{print $1}')
+    kubectl describe pod $MONGO_POD
+    kubectl logs $EXPRESS_POD
+    kubectl describe service mongodb-service
+    kubectl get all | grep mongo
+
+
+    ```
+
+
 ## Usage (Exercises)
 
 TODO
@@ -53,7 +77,7 @@ TODO
     ./remote-setup-ArgoCD.sh
     ```
 
-2. We also want to setup ingress-nginx for minikube to handle incoming traffic 
+2. We also want to setup ingress-nginx for minikube to handle incoming traffic from the outside world
 
     See https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
 
@@ -61,4 +85,28 @@ TODO
     ```
     ./remote-setup-ingress-nginx.sh
     ```
+
+    b. Install nginx reverse proxy to forward outside requests to the VPS to the minikube ip address on the ingress controller port. To configure nginx replace `proxy_pass` ip with your minikube ip from the output of step a)
+    ```
+    ssh root@<REMOTE_ADDRESS>
+    sudo apt update
+    sudo apt install nginx-full
+
+    echo "
+    stream {
+        server {
+            listen 30080;
+            listen 30443;
+            proxy_pass 192.168.49.2:80;
+        }
+    }
+    " >> /etc/nginx/nginx.conf
+    
+    sudo nginx -t
+    
+    sudo systemctl restart nginx
+    ```
+    Now you can access <REMOTE_ADDRESS>:30080 in a browser from any external device!
+
+    c. Currently only http access on port 30080 is supported. HTTPS certificate config is a topic for another day. See potentially https://www.zepworks.com/posts/access-minikube-remotely-kvm/#4-certs or https://minikube.sigs.k8s.io/docs/handbook/untrusted_certs/ 
     
