@@ -110,7 +110,7 @@ TODO
     
     sudo systemctl restart nginx
     ```
-    Now you can access <REMOTE_ADDRESS>:30080 in a browser from any external device!
-
-    c. Currently only http access on port 30080 is supported. HTTPS certificate config is a topic for another day. See potentially https://www.zepworks.com/posts/access-minikube-remotely-kvm/#4-certs or https://minikube.sigs.k8s.io/docs/handbook/untrusted_certs/ 
+    You can access the plain site http://<REMOTE_ADDRESS>:30080 in a browser from any external device.
+    You can access the TLS site https://<REMOTE_ADDRESS>:30443 in a browser from any external device.
+    NOTE: HTTPS certificate config to remove security warning is a topic for another day. See potentially https://www.zepworks.com/posts/access-minikube-remotely-kvm/#4-certs or https://minikube.sigs.k8s.io/docs/handbook/untrusted_certs/ 
     
