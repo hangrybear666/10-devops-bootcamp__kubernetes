@@ -96,8 +96,12 @@ TODO
     stream {
         server {
             listen 30080;
-            listen 30443;
             proxy_pass 192.168.49.2:80;
+        }
+        
+        server {
+            listen 30443;
+            proxy_pass 192.168.49.2:443;
         }
     }
     " >> /etc/nginx/nginx.conf
