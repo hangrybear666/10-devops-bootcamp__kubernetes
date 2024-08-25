@@ -64,7 +64,7 @@ The main projects are:
 
 TODO
 
-## Usage (Bonus Setup)
+## Usage (Bonus Remote VPS Setup)
 
 1. First of all, we want to setup ArgoCD to use GitOps principles for writing declarative configuration, versioning, storing and running our k8s cluster 
 
@@ -77,7 +77,7 @@ TODO
     ./remote-setup-ArgoCD.sh
     ```
 
-2. We also want to setup ingress-nginx for minikube to handle incoming traffic from the outside world
+2. We also want to setup ingress-nginx for minikube to handle incoming traffic from the outside world into our remote VPS
 
     See https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
 
