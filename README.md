@@ -59,7 +59,31 @@ The main projects are:
 
     ```
 
+2. Deploy ConfigMap and Secret Volume Types with file persistence 
 
+    a. To start a basic mosquitto container with default values and log the configuration file, do:
+    ```
+    # basic mosquitto app with standard conf
+    kubectl apply -f k8s/mosquitto-without-volumes.yaml  
+
+    # log default config
+    MOSQUITTO_POD=$(kubectl get pods --no-headers -o custom-columns=":metadata.name" | grep "mosquitto")
+    kubectl exec $MOSQUITTO_POD -- cat /mosquitto/config/mosquitto.conf
+    ```
+
+    b. 
+    ```
+    kubectl apply -f k8s/mosquitto-config-file.yaml
+    kubectl apply -f k8s/mosquitto-secret-file.yaml
+    kubectl apply -f k8s/mosquitto.yaml
+    # log both conf and secret file from volume mount to console
+    MOSQUITTO_POD=$(kubectl get pods --no-headers -o custom-columns=":metadata.name" | grep "mosquitto")
+    kubectl exec $MOSQUITTO_POD -- sh -c \
+      "echo -e '\nmosquitto.conf:' \
+      && cat /mosquitto/config/mosquitto.conf \
+      && echo -e '\nsecret.file:' \
+      && cat /mosquitto/secret/secret.file"
+    ```
 ## Usage (Exercises)
 
 TODO
