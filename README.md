@@ -5,6 +5,7 @@ DESCRIPTION DETAIL
 The main projects are:
 - A simple app with ConfigMap, (unencrypted/insecure) Secret and Service in k8s cluster
 - A simple app with ConfigMap File and Secret File Volume Mounting for initializing containers with custom files
+- Managed k8s cluster on Linode running a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts
 
 The bonus projects are:
 - An ArgoCD deployment in Kubernetes following GitOps principles for declarative configuration versioning and storage.
@@ -97,7 +98,7 @@ The bonus projects are:
       && cat /mosquitto/secret/secret.file"
     ```
 
-3. Start a Managed k8s cluster on Linode and run a replicated StatefulSet application with multiple nodes and attached volumes using Helm Charts
+3. Start a Managed k8s cluster on Linode and run a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts
 
     a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
 
