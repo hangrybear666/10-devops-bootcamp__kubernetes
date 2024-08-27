@@ -1,0 +1,5 @@
+# use this file to overwrite any default values in the helm chart
+architecture: replicaset
+replicaCount: 3
+persistence:
+  storageClass: "linode-block-storage"

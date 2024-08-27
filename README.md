@@ -3,7 +3,12 @@
 DESCRIPTION DETAIL
 
 The main projects are:
+- A simple app with ConfigMap, (unencrypted/insecure) Secret and Service in k8s cluster
+- A simple app with ConfigMap File and Secret File Volume Mounting for initializing containers with custom files
+
+The bonus projects are:
 - An ArgoCD deployment in Kubernetes following GitOps principles for declarative configuration versioning and storage.
+- An nginx reverse proxy to route external traffic into a remote linux VPS to an ingress-nginx-controller which forwards the requests to an internal service
 
 ## Setup
 
@@ -33,6 +38,13 @@ The main projects are:
 
     Install `jq` to parse json files. 
 
+4. Install helm on your local OS
+
+    See https://helm.sh/docs/intro/install/
+    ```
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    ```
+
 
 ## Usage (Demo Projects)
 
@@ -59,9 +71,9 @@ The main projects are:
 
     ```
 
-2. Deploy ConfigMap and Secret Volume Types with file persistence 
+2. Deploy ConfigMap File and Secret File Volume Mounting for initializing containers with custom files
 
-    a. To start a basic mosquitto container with default values and log the configuration file, do:
+    a. To start a basic mosquitto container with default values and log the configuration file, run:
     ```
     # basic mosquitto app with standard conf
     kubectl apply -f k8s/mosquitto-without-volumes.yaml  
@@ -71,7 +83,7 @@ The main projects are:
     kubectl exec $MOSQUITTO_POD -- cat /mosquitto/config/mosquitto.conf
     ```
 
-    b. 
+    b. To overwrite the mosquitto.conf file and create a secret.file in the containers via Volume mounts, run:
     ```
     kubectl apply -f k8s/mosquitto-config-file.yaml
     kubectl apply -f k8s/mosquitto-secret-file.yaml
@@ -84,6 +96,60 @@ The main projects are:
       && echo -e '\nsecret.file:' \
       && cat /mosquitto/secret/secret.file"
     ```
+
+3. Start a Managed k8s cluster on Linode and run a replicated StatefulSet application with multiple nodes and attached volumes using Helm Charts
+
+    a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
+
+    b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. Then uninstall minikube and install kubectl manually, otherwise kubectl will be used with the minikube binary resulting in connection errors. 
+
+    Installation help: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+    ```
+    minikube stop 
+    minikube delete --all --purge
+    # delete alias kubectl="minikube kubectl -- from .bashrc
+    vim ~/.bashrc
+    # e.g. remove from ubuntu
+    sudo rm /usr/local/bin/minikube
+    # or remove from debian
+    dpkg --remove minikube
+
+    # install kubectl 
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+    # change permissions for downloaded kubeconfig
+    chmod 400 test-cluster-kubeconfig.yaml
+    export KUBECONFIG=test-cluster-kubeconfig.yaml
+    kubectl get nodes
+    ```
+
+    c. Add the helm repo and install a mongodb helm chart. For reference see https://artifacthub.io/packages/helm/bitnami/mongodb
+    ```
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+    helm search repo bitnami/mongodb
+    helm install mongodb --values k8s/helm-mongodb.yaml bitnami/mongodb --version 15.6.21
+    # username is admin
+    # for password run
+    kubectl get secret --namespace default mongodb -o jsonpath="{.data.mongodb-root-password}" | base64 -d
+    ```
+
+    d. Add a mongo-express container and service listening on port 8081 internally for incoming traffic to render a GUI in browser.
+    ```
+    kubectl apply -f k8s/helm-mongo-express.yaml
+    ```
+
+    e. Add nginx-ingress-controller to route incoming traffic from Linode's NodeBalancer to the mongo-express internal ClusterIP Service. Installation of the Helm chart also automatically sets up a NodeBalancer on Linode, the public dns name of which we have to save and replace in `k8s/helm-ingress.yaml` in the `- host: ` value
+    ```
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    helm install nginx-ingress ingress-nginx/ingress-nginx --version 4.11.2 --set controller.publishService.enabled=true
+    # add Linode NodeBalancer hostname to k8s/helm-ingress.yaml 
+    kubectl apply -f k8s/helm-ingress.yaml
+    ```
+
+    f. Navigate to your Nodebalancer DNS host name to access mongo-express with default credentials `admin` and `pass` to persist data. You can uninstall the database by running `helm uninstall mongodb` then start it back up with the command from step c) and see that data has been persisted in the persistent volume on Linode which are subsequently reattached to their respective pods.
+
+
 ## Usage (Exercises)
 
 TODO
