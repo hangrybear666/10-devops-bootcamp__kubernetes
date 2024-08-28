@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: mongo-express
-        image: mongo-express
+        image: mongo-express:1.0.2-18
         ports:
         - containerPort: 8081
         env:
@@ -24,6 +24,8 @@ spec:
           value: root
         - name: ME_CONFIG_MONGODB_SERVER
           value: mongodb-0.mongodb-headless
+        - name: ME_CONFIG_MONGODB_URL
+          value: mongodb-0.mongodb-headless.default.svc.cluster.local:27017
         - name: ME_CONFIG_MONGODB_ADMINPASSWORD 
           valueFrom:
             secretKeyRef:

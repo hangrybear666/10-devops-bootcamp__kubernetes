@@ -144,13 +144,17 @@ export KUBECONFIG=test-cluster-kubeconfig.yaml
 kubectl get nodes
 ```
 
-c. Add the helm repo and install a mongodb helm chart. For reference see https://artifacthub.io/packages/helm/bitnami/mongodb
+c. Add the helm repo and install a mongodb helm chart. Then connect to the db with a temporary mongo client to test the connection. For reference see https://artifacthub.io/packages/helm/bitnami/mongodb
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm search repo bitnami/mongodb
-helm install mongodb --values k8s/helm-mongodb.yaml bitnami/mongodb --version 15.6.21
-# username is admin - for password run:
-kubectl get secret --namespace default mongodb -o jsonpath="{.data.mongodb-root-password}" | base64 -d
+helm install mongodb --values k8s/helm-mongodb.yaml bitnami/mongodb --version 13.16.3
+# username is root - for password run:
+export MONGODB_ROOT_PASSWORD=$(kubectl get secret --namespace default mongodb -o jsonpath="{.data.mongodb-root-password}" | base64 -d)
+# create mongo client
+kubectl run --namespace default mongodb-client --rm --tty -i --restart='Never' --env="MONGODB_ROOT_PASSWORD=$MONGODB_ROOT_PASSWORD" --image docker.io/bitnami/mongodb:6.0.8-debian-11-r12 --command -- bash
+# connect to db within mongo client
+mongosh admin --host "mongodb-0.mongodb-headless.default.svc.cluster.local:27017,mongodb-1.mongodb-headless.default.svc.cluster.local:27017,mongodb-2.mongodb-headless.default.svc.cluster.local:27017" --authenticationDatabase admin -u root -p $MONGODB_ROOT_PASSWORD
 ```
 
 d. Add a mongo-express container and service listening on port 8081 internally for incoming traffic to render a GUI in browser.
