@@ -240,11 +240,11 @@ kubectl apply -f k8s/mongo-express.yaml
 kubectl apply -f k8s/node-app-deployment.yaml
 ```
 
-f. Since your ip will differ from mine and also the docker-compose variant and depends on the minikube cluster configuration, we have to exec a shell in the node-app pod and replace `localhost` in `index.html` with our minikube ip
+f. Since your ip will differ from mine and also the docker-compose variant and depends on the minikube cluster configuration, we have to exec a shell in the node-app pod and replace `localhost` in `index.html` with our minikube ip and the port with our loadbalancer nodeport
 ```bash
 NODE_APP_POD_NAME=$(kubectl get pods --no-headers -o custom-columns=":metadata.name" | grep "node-app")
 kubectl exec -it $NODE_APP_POD_NAME -- /bin/sh
-vi index.html # and replace localhost with your minikube ip!
+vi index.html # and replace localhost with your minikube ip and 3000 with your loadbalancer nodeport!
 # then access minicube-ip:30001 in the browser or run
 minikube service node-app-service
 ```
