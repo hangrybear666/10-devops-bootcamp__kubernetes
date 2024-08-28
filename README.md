@@ -181,7 +181,14 @@ aws ecr get-login-password --region eu-central-1 | docker login --username AWS -
 cp /home/$USER/.docker/config.json config/
 ```
 
-b. Create secret in k8s cluster with registry credentials
+b. Build and Push your NodeJS application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
+```bash
+docker build -t node-app:1.5 node-app/.
+docker tag node-app:1.5 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.5
+docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.5
+```
+
+c. Create secret in k8s cluster with registry credentials
 
 Alternative 1 (allowing multiple registries to be added, since they are comma delimited in config file)
 ```bash
@@ -191,18 +198,12 @@ kubectl create secret generic my-registry-key-1 \
 ```
 
 Alternative 2 (allowing only a single registry to be set)
+NOTE: To use this, overwrite `imagePullSecrets:- name: my-registry-key-1` in `k8s/node-app-deployment.yaml`
 ```bash
 kubectl create secret docker-registry my-registry-key-2 \
     --docker-server=010928217051.dkr.ecr.eu-central-1.amazonaws.com \
     --docker-username=AWS \
     --docker-password=$(aws ecr get-login-password)
-```
-
-c. Build and Push your NodeJS application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
-```bash
-docker build -t node-app:1.1 node-app/.
-docker tag node-app:1.1 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.1
-docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.1
 ```
 
 d. Setup environment and container secrets to avoid exposure in SCM. Create an `node-app/app/.env` file and add the following keys, changing credentials to your own:
@@ -220,29 +221,35 @@ MONGO_INITDB_ROOT_PASSWORD=password
 Then export your AWS ECR Image URL as environment variable and test whether or not your setup is correct by running
 
 ```bash
-export AWS_NODE_IMG_URL=010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.1
-docker compose -f node-app/docker-compose.yaml up 
+export AWS_NODE_IMG_URL=010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.5
+docker compose -f node-app/docker-compose.yaml up
 ```
 NOTE: if you are running the docker compose on a remote VPS, you have simply have to copy the `docker-compose.yaml` to your remote via scp and then copy the `node-app/app/.env` file to your remote and create an `app/` folder next to the docker compose file where the `.env` can recide. One additional step is to enter your running node-app docker container via docker exec -it CONTAINER_HASH /bin/sh and execute `vi index.html` and exchange `localhost` with your remote ip, e.g. `64.226.117.247`
 
-TODO helper
+e. Replace `image: 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.5` with your own AWS ECR image-tag in the file `k8s/node-app-deployment.yaml` and run the following commands
+
+IMPORTANT: `mongo-root-username` and `mongo-root-password` have to be identical to the ones in your `.env` file from step d)!
 ```bash
-# for node app
-MONGO_DB_USERNAME=user
-MONGO_DB_PWD=password
--PORT 3000
-# for mongo db
-MONGO_INITDB_ROOT_USERNAME=user
-MONGO_INITDB_ROOT_PASSWORD=password
--volume mount in /data/db in image
--PORT 27017
-# for mongo express
-ME_CONFIG_MONGODB_ADMINUSERNAME=user
-ME_CONFIG_MONGODB_ADMINPASSWORD=password
-ME_CONFIG_MONGODB_SERVER=
-ME_CONFIG_MONGODB_URL=mongodb://
--PORT 8081
+kubectl create secret generic mongodb-secret \
+    --namespace=default \
+    --from-literal=mongo-root-username='admin' \
+    --from-literal=mongo-root-password='password'
+kubectl apply -f k8s/mongodb.yaml
+kubectl apply -f k8s/mongo-configmap.yaml
+kubectl apply -f k8s/mongo-express.yaml
+kubectl apply -f k8s/node-app-deployment.yaml
 ```
+
+f. Since your ip will differ from mine and also the docker-compose variant and depends on the minikube cluster configuration, we have to exec a shell in the node-app pod and replace `localhost` in `index.html` with our minikube ip
+```bash
+NODE_APP_POD_NAME=$(kubectl get pods --no-headers -o custom-columns=":metadata.name" | grep "node-app")
+kubectl exec -it $NODE_APP_POD_NAME -- /bin/sh
+vi index.html # and replace localhost with your minikube ip!
+# then access minicube-ip:30001 in the browser or run
+minikube service node-app-service
+```
+<b>Support: !DOES NOT WORK CURRENTLY!</b>
+
 
 ## Usage (Exercises)
 

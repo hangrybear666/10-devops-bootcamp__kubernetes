@@ -29,8 +29,12 @@ let mongoUrlLocal = `mongodb://${process.env.MONGO_DB_USERNAME}:${process.env.MO
 // use when starting application as docker container, part of docker-compose
 let mongoUrlDockerCompose = `mongodb://${process.env.MONGO_DB_USERNAME}:${process.env.MONGO_DB_PWD}@mongodb`;
 
-let mongoUrlToUse = process.env.NODE_ENVIRONMENT === 'docker-development' ? mongoUrlDockerCompose : mongoUrlLocal
+// kubernetes cluster requires using the mongo-db service instead
+let mongoUrlKubernetesCluster = `mongodb://${process.env.MONGO_DB_USERNAME}:${process.env.MONGO_DB_PWD}@mongodb-service`;
+
+let mongoUrlToUse = process.env.NODE_ENVIRONMENT === 'docker-development' ? mongoUrlDockerCompose : process.env.NODE_ENVIRONMENT === 'kubernetes-development' ? mongoUrlKubernetesCluster : mongoUrlLocal
 console.log("NODE_ENVIRONMENT is: " + process.env.NODE_ENVIRONMENT)
+// use to debug
 //console.log(`using mongodb Url ${mongoUrlToUse}`)
 
 // pass these options to mongo client connect request to avoid DeprecationWarning for current Server Discovery and Monitoring engine
@@ -39,6 +43,16 @@ let mongoClientOptions = { useNewUrlParser: true, useUnifiedTopology: true };
 // "user-account" in demo with docker
 let databaseName = "user-account";
 let collectionName = "users";
+
+// Test MongoDB connection
+MongoClient.connect(mongoUrlToUse, mongoClientOptions, function (err, client) {
+  if (err) {
+    console.error("Failed to connect to MongoDB:", err);
+  } else {
+    console.log("Successfully connected to MongoDB");
+    client.close(); // Close the connection after checking
+  }
+});
 
 app.get('/get-profile', function (req, res) {
   let response = {};

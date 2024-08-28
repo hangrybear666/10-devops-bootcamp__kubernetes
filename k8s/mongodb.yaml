@@ -1,4 +1,4 @@
-apiVersion: apps/v1 
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mongodb-deployment
@@ -10,7 +10,7 @@ spec:
   selector:
     matchLabels:
       app: mongodb
-  template: 
+  template:
     metadata:
       labels:
         app: mongodb
@@ -30,7 +30,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: mongodb-secret
-              key: mongo-root-password 
+              key: mongo-root-password
 ---
 apiVersion: v1
 kind: Service
@@ -42,4 +42,4 @@ spec:
   ports:
   - protocol: TCP
     port: 27017
-    targetPort: 27017 
+    targetPort: 27017

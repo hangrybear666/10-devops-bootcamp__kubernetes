@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-app
+  labels:
+    app: node-app
+spec:
+  replicas:
+  selector:
+    matchLabels:
+      app: node-app
+  template:
+    metadata:
+      labels:
+        app: node-app
+    spec:
+      imagePullSecrets:
+      - name: my-registry-key-1
+      containers:
+      - name: node-app
+        image: 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.5
+        imagePullPolicy: Always
+        env:
+        - name: NODE_ENVIRONMENT
+          value: kubernetes-development
+        ports:
+        - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-app-service
+spec:
+  selector:
+    app: node-app
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+    nodePort: 30001
