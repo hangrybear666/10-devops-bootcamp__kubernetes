@@ -7,6 +7,7 @@ The main projects are:
 - A simple app with ConfigMap File and Secret File Volume Mounting for initializing containers with custom files
 - Managed k8s cluster on Linode running a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts
 - Deployment of a custom NodeJS-application image published and pulled from AWS ECR, with mongodb and mongo-express pods & services running
+- Deployment of 11 replicated microservices with best-practice k8s configuration in a Linode Manages Kubernetes Cluster
 
 The bonus projects are:
 - An ArgoCD deployment in Kubernetes following GitOps principles for declarative configuration versioning and storage.
@@ -248,7 +249,30 @@ vi index.html # and replace localhost with your minikube ip and 3000 with your l
 # then access minicube-ip:30001 in the browser or run
 minikube service node-app-service
 ```
-<b>Support: !DOES NOT WORK CURRENTLY!</b>
+
+### 5. Deployment of 11 replicated microservices with best-practice k8s configuration in a Linode Manages Kubernetes Cluster
+
+NOTE: The microservices app is a google developed multi-language application with service-to-service communication via gRPC. See https://github.com/GoogleCloudPlatform/microservices-demo/tree/main
+
+a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 4GB each on a shared CPU is sufficient. 
+
+b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. 
+
+Then run:
+```bash
+# change permissions for downloaded kubeconfig
+chmod 400 test-cluster-kubeconfig.yaml
+export KUBECONFIG=test-cluster-kubeconfig.yaml
+kubectl get nodes
+```
+
+c. Start the microservice application including a LoadBalancer receiving an external DNS Name from your Linode NodeBalancer for public access.
+
+```bash
+kubectl apply -f k8s/microservices-best-practice.yaml
+```
+
+d. Navigate to your Nodebalancer DNS host name to access the microservices frontend.
 
 
 ## Usage (Exercises)
