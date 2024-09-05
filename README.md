@@ -2,18 +2,22 @@
 
 DESCRIPTION DETAIL
 
-The main projects are:
-- A simple app with ConfigMap, locally generated Secret to avoid SCM exposure and external LoadBalancer Service in k8s cluster
-- A simple app with ConfigMap File and Secret File Volume Mounting for initializing containers with custom files
-- Managed k8s cluster on Linode running a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts
-- Deployment of a custom NodeJS-application image published and pulled from AWS ECR, with mongodb and mongo-express pods & services running
-- Deployment of 11 replicated microservices with best-practice configuration via single k8s.yaml file
-- Deployment of 11 replicated microservices with several helm install commands bundled in a bash script
-- Deployment of 11 replicated microservices with single helmfile apply command
+<b><u>The main projects are:</u></b>
+1. A simple app with ConfigMap, locally generated Secret to avoid SCM exposure and external LoadBalancer Service in k8s cluster
+2. A simple app with ConfigMap File and Secret File Volume Mounting for initializing containers with custom files
+3. Managed k8s cluster on Linode running a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts
+4. Deployment of a custom NodeJS-application image published and pulled from AWS ECR, with mongodb and mongo-express pods & services running
+5. Deployment of 11 replicated microservices with best-practice configuration via single k8s.yaml file
+6. Deployment of 11 replicated microservices with several helm install commands bundled in a bash script
+7. Deployment of 11 replicated microservices with single helmfile apply command
 
-The bonus projects are:
-- An ArgoCD deployment in Kubernetes following GitOps principles for declarative configuration versioning and storage.
-- An nginx reverse proxy to route external traffic into a remote linux VPS to an ingress-nginx-controller which forwards the requests to an internal service
+<b><u>The exercise projects are:</u></b>
+- A SpringBoot Java App with mysql-db and phpmyadmin-ui running with k8s.yaml files via kubectl apply commands
+- A SpringBoot Java App with mysql-db and phpmyadmin-ui running 
+
+<b><u>The bonus projects are:</u></b>
+1. An ArgoCD deployment in Kubernetes following GitOps principles for declarative configuration versioning and storage.
+2. An nginx reverse proxy to route external traffic into a remote linux VPS to an ingress-nginx-controller which forwards the requests to an internal service
 
 ## Setup
 
