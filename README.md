@@ -292,6 +292,7 @@ d. Navigate to your Nodebalancer DNS host name to access the microservices front
 
 a. Simply execute the following command from the git project root directory
 ```bash
+export KUBECONFIG=test-cluster-kubeconfig.yaml
 # install
 bash scripts/helm-install-microservices.sh 
 # uninstall
