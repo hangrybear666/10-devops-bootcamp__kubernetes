@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.nameSpace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: "{{ .Values.appName }}-container"
+        image: "{{ .Values.imageRepository }}/{{ .Values.imageName | default .Values.appName }}:{{ .Values.imageTag | default .Chart.AppVersion }}"
+        env:
+        {{- range .Values.containerEnvVars}}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end}}
+        ports:
+        - containerPort: {{ .Values.containerPort }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+        readinessProbe:
+        {{- if eq .Values.appName "frontend" }}
+          httpGet:
+            path: "/_healthz"
+            port: {{ .Values.containerPort }}
+            httpHeaders:
+            - name: "Cookie"
+              value: "shop_session-id=x-readiness-probe"
+        {{- else if eq .Values.appName "redis-cart" }}
+          tcpSocket:
+            port: {{ .Values.containerPort }}
+        {{- else }}
+          grpc:
+            port: {{ .Values.containerPort }}
+        {{- end }}
+          initialDelaySeconds: {{ .Values.readinessProbeInitialDelay }}
+          periodSeconds: {{ .Values.readinessProbePeriod }}
+        livenessProbe:
+        {{- if eq .Values.appName "frontend" }}
+          httpGet:
+            path: "/_healthz"
+            port: {{ .Values.containerPort }}
+            httpHeaders:
+            - name: "Cookie"
+              value: "shop_session-id=x-liveness-probe"
+        {{- else if eq .Values.appName "redis-cart" }}
+          tcpSocket:
+            port: {{ .Values.containerPort }}
+        {{- else }}
+          grpc:
+            port: {{ .Values.containerPort }}
+        {{- end }}
+          initialDelaySeconds: {{ .Values.livenessProbeInitialDelay }}
+          periodSeconds: {{ .Values.livenessProbePeriod }}
+        resources:
+          requests:
+            cpu: {{ .Values.cpuRequested }}
+            memory: {{ .Values.memoryRequested }}
+            {{- with .Values.emphemeralStorageRequest }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+          limits:
+            cpu: {{ .Values.cpuLimit }}
+            memory: {{ .Values.memoryLimit }}
+            {{- with .Values.emphemeralStorageLimit }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- with .Values.volumeMounts }}
+        volumeMounts:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}

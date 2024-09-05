@@ -1,0 +1,59 @@
+releases: 
+  - name: redis-cart
+    chart: microservices/
+    values: 
+      - microservices/values/redis-cart.yaml
+
+  - name: emailservice
+    chart: microservices/
+    values:
+      - microservices/values/emailservice.yaml
+
+  - name: cartservice
+    chart: microservices/
+    values:
+      - microservices/values/cartservice.yaml
+
+  - name: currencyservice
+    chart: microservices/
+    values:
+      - microservices/values/currencyservice.yaml   
+
+  - name: paymentservice
+    chart: microservices/
+    values:
+      - microservices/values/paymentservice.yaml
+
+  - name: recommendationservice
+    chart: microservices/
+    values:
+      - microservices/values/recommendationservice.yaml
+
+  - name: productcatalogservice
+    chart: microservices/
+    values:
+      - microservices/values/productcatalogservice.yaml
+
+  - name: shippingservice
+    chart: microservices/
+    values:
+      - microservices/values/shippingservice.yaml
+
+  - name: adservice
+    chart: microservices/
+    values:
+      - microservices/values/adservice.yaml
+
+  - name: checkoutservice
+    chart: microservices/
+    values:
+      - microservices/values/checkoutservice.yaml
+
+  - name: frontend
+    chart: microservices/
+    values:
+      - microservices/values/frontend.yaml
+    # override environment variables
+    set:
+      - name: containerEnvVars[9].value  # Index of FRONTEND_MESSAGE in the array
+        value: "Hello from helmfile deployment in helm/helmfile.yaml"

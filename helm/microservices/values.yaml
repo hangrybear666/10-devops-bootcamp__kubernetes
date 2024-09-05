@@ -1,0 +1,16 @@
+# Default values for microservices.
+# Can be overwritten with own value files or --set option in cli
+
+serviceType: ClusterIP
+replicaCount: 2
+nameSpace: microservices
+terminationGracePeriodSeconds: 5
+readinessProbeInitialDelay: 5
+readinessProbePeriod: 5
+livenessProbeInitialDelay: 5
+livenessProbePeriod: 5
+imageRepository: gcr.io/google-samples/microservices-demo
+cpuRequested: 100m
+memoryRequested: 64Mi
+cpuLimit: 200m
+memoryLimit: 128Mi

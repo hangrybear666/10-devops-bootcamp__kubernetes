@@ -1,0 +1,18 @@
+appName: productcatalogservice
+servicePort: 3550
+containerPort: 3550
+containerEnvVars:
+  - name: PORT
+    value: "3550"
+  - name: DISABLE_PROFILER
+    value: "1"
+
+#cpuRequested: 100m
+#memoryRequested: 64Mi
+#cpuLimit: 200m
+#memoryLimit: 128Mi
+
+#readinessProbeInitialDelay: 5
+#readinessProbePeriod: 5
+#livenessProbeInitialDelay: 5
+#livenessProbePeriod: 5

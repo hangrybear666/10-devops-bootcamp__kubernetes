@@ -1,0 +1,18 @@
+appName: paymentservice
+servicePort: 50051
+containerPort: 50051
+containerEnvVars:
+  - name: PORT
+    value: "50051"
+  - name: DISABLE_PROFILER
+    value: "1"
+
+#cpuRequested: 100m
+#memoryRequested: 64Mi
+#cpuLimit: 200m
+#memoryLimit: 128Mi
+
+#readinessProbeInitialDelay: 5
+#readinessProbePeriod: 5
+#livenessProbeInitialDelay: 5
+#livenessProbePeriod: 5

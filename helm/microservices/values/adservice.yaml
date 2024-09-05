@@ -1,0 +1,16 @@
+appName: adservice
+servicePort: 9555
+containerPort: 9555
+containerEnvVars:
+  - name: PORT
+    value: "9555"
+
+cpuRequested: 200m
+memoryRequested: 180Mi
+cpuLimit: 300m
+memoryLimit: 300Mi
+
+readinessProbeInitialDelay: 20
+readinessProbePeriod: 15
+livenessProbeInitialDelay: 20
+livenessProbePeriod: 15

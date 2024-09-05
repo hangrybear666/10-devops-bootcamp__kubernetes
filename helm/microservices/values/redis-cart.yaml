@@ -1,0 +1,29 @@
+appName: redis-cart
+servicePort: 6379
+containerPort: 6379
+imageRepository: docker.io
+imageName: redis
+imageTag: 7.4.0-alpine3.20
+cpuRequested: 70m
+memoryRequested: 200Mi
+cpuLimit: 125m
+memoryLimit: 320Mi
+
+readinessProbeInitialDelay: 20
+readinessProbePeriod: 15
+livenessProbeInitialDelay: 20
+livenessProbePeriod: 15
+
+emphemeralStorageRequest:
+  ephemeral-storage: 320Mi
+emphemeralStorageLimit: 
+  ephemeral-storage: 512Mi
+
+volumes:
+- name: redis-data
+  emptyDir:
+    medium: Memory
+    sizeLimit: 256Mi
+volumeMounts:
+- mountPath: /data
+  name: redis-data

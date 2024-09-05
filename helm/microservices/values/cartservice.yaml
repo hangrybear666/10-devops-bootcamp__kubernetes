@@ -1,0 +1,16 @@
+appName: cartservice
+servicePort: 7070
+containerPort: 7070
+containerEnvVars:
+  - name: REDIS_ADDR
+    value: "redis-cart:6379"
+
+cpuRequested: 200m
+#memoryRequested: 64Mi
+cpuLimit: 300m
+#memoryLimit: 128Mi
+
+readinessProbeInitialDelay: 15
+readinessProbePeriod: 10
+livenessProbeInitialDelay: 15
+livenessProbePeriod: 10

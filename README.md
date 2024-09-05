@@ -8,6 +8,8 @@ The main projects are:
 - Managed k8s cluster on Linode running a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts
 - Deployment of a custom NodeJS-application image published and pulled from AWS ECR, with mongodb and mongo-express pods & services running
 - Deployment of 11 replicated microservices with best-practice k8s configuration in a Linode Manages Kubernetes Cluster
+- Deployment of 11 replicated microservices with Helm install commands bundled in a bash script
+- Deployment of 11 replicated microservices with Helmfile 
 
 The bonus projects are:
 - An ArgoCD deployment in Kubernetes following GitOps principles for declarative configuration versioning and storage.
@@ -15,39 +17,50 @@ The bonus projects are:
 
 ## Setup
 
-1. Pull SCM
+### 1. Pull SCM
 
-    Pull the repository locally by running
-    ```
-    git clone https://github.com/hangrybear666/10-devops-bootcamp__kubernetes.git
-    ```
-2. Install Minikube on your local OS (or in our case a remote VPS)
+Pull the repository locally by running
+```
+git clone https://github.com/hangrybear666/10-devops-bootcamp__kubernetes.git
+```
+### 2. Install Minikube on your local OS (or in our case a remote VPS)
 
-    For local development simply follow https://minikube.sigs.k8s.io/docs/start/. 
-    
-    The following steps execute automatic installation on remote debian based VPS:
+For local development simply follow https://minikube.sigs.k8s.io/docs/start/. 
 
-    a. Add `SERVICE_USER_PW=xxx` to your `.env` file so the installation script can add this to the new user. Overwrite`REMOTE_ADDRESS=xxx` to yours in `config/remote.properties`
+The following steps execute automatic installation on remote debian based VPS:
 
-    b. Run the installation script in `scripts/` folder and type `y` if you wish to install docker before installaing minikube and `n` if docker is already installed.
-    ```bash
-    # this is aimed at Debian-like distros with the apt package manager
-    ./remote-install-minikube.sh
-    # If you want to remove docker and/or minikube run
-    ./remote-uninstall-minikube.sh
-    ``` 
+a. Add `SERVICE_USER_PW=xxx` to your `.env` file so the installation script can add this to the new user. Overwrite`REMOTE_ADDRESS=xxx` to yours in `config/remote.properties`
 
-3. Install additional dependencies 
+b. Run the installation script in `scripts/` folder and type `y` if you wish to install docker before installaing minikube and `n` if docker is already installed.
+```bash
+# this is aimed at Debian-like distros with the apt package manager
+./remote-install-minikube.sh
+# If you want to remove docker and/or minikube run
+./remote-uninstall-minikube.sh
+``` 
 
-    Install `jq` to parse json files. 
+### 3. Install additional dependencies 
 
-4. Install helm on your local OS
+Install `jq` to parse json files. 
 
-    See https://helm.sh/docs/intro/install/
-    ```bash
-    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-    ```
+### 4. Install helm on your local OS
 
+See https://helm.sh/docs/intro/install/
+```bash
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+```
+
+### 5. Install helmfile on your local OS and run helmfile init to install plugins
+
+Find the binary link for your OS at https://github.com/helmfile/helmfile/releases
+```bash
+curl -O https://github.com/helmfile/helmfile/releases/download/v1.0.0-rc.4/helmfile_1.0.0-rc.4_linux_386.tar.gz
+tar -xzf helmfile_1.0.0-rc.4_linux_386.tar.gz --wildcards '*helmfile'
+sudo chmod +x helmfile
+sudo mv helmfile /usr/bin/helmfile
+helmfile init
+# install plugins by agreeing with "y"
+```
 
 ## Usage (Demo Projects)
 
@@ -270,10 +283,31 @@ c. Start the microservice application including a LoadBalancer receiving an exte
 
 ```bash
 kubectl apply -f k8s/microservices-best-practice.yaml
+#kubectl delete -f k8s/microservices-best-practice.yaml
 ```
 
 d. Navigate to your Nodebalancer DNS host name to access the microservices frontend.
 
+### 6. Deployment of 11 replicated microservices with Helm install commands bundled in a bash script
+
+a. Simply execute the following command from the git project root directory
+```bash
+# install
+bash scripts/helm-install-microservices.sh 
+# uninstall
+bash scripts/helm-uninstall-microservices.sh 
+```
+
+### 7. Deployment of 11 replicated microservices with Helmfile
+
+a. Simply execute the following command from the git project root directory
+```bash
+# install
+KUBECONFIG=$(pwd)/test-cluster-kubeconfig.yaml helmfile apply --file helm/helmfile.yaml -n microservices
+# uninstall
+KUBECONFIG=$(pwd)/test-cluster-kubeconfig.yaml helmfile destroy --file helm/helmfile.yaml -n microservices
+
+```
 
 ## Usage (Exercises)
 
