@@ -64,7 +64,9 @@ helmfile init
 
 ## Usage (Demo Projects)
 
-### 1. Deploy a simple application with ConfigMap, locally generated Secret to avoid SCM exposure and external LoadBalancer Service in k8s cluster
+<details closed>
+<summary><b>1. Deploy a simple application with ConfigMap, locally generated Secret to avoid SCM exposure and external LoadBalancer Service in k8s cluster</b></summary>
+
 
 NOTE: Replace `mongo-root-username` and `mongo-root-password` values with your own.
 ```bash
@@ -80,9 +82,6 @@ minikube service mongo-express-service
 #default credentials for mongo-express are admin:pass
 ```
 
-<details closed>
-<summary><b>Click for informative kubectl commands</b></summary>
-
 ```bash
 MONGO_POD=$(kubectl get pods --no-headers | grep "mongodb-deployment" | awk '{print $1}')
 EXPRESS_POD=$(kubectl get pods --no-headers | grep "mongo-express" | awk '{print $1}')
@@ -93,7 +92,11 @@ kubectl get all | grep mongo
 ```
 </details>
 
-### 2. Deploy ConfigMap File and Secret File Volume Mounting for initializing containers with custom files
+-----
+
+<details closed>
+<summary><b>2. Deploy ConfigMap File and Secret File Volume Mounting for initializing containers with custom files</b></summary>
+
 
 a. To start a basic mosquitto container with default values and log the configuration file, run:
 ```bash
@@ -123,8 +126,13 @@ kubectl exec $MOSQUITTO_POD -- sh -c \
     && echo -e '\nsecret.file:' \
     && cat /mosquitto/secret/secret.file"
 ```
+</details>
 
-### 3. Start a Managed k8s cluster on Linode and run a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts
+-----
+
+<details closed>
+<summary><b>3. Start a Managed k8s cluster on Linode and run a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts</b></summary>
+
 
 a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
 
@@ -185,8 +193,13 @@ kubectl apply -f k8s/helm-ingress.yaml
 ```
 
 f. Navigate to your Nodebalancer DNS host name to access mongo-express with default credentials `admin` and `pass` to persist data. You can uninstall the database by running `helm uninstall mongodb` then start it back up with the command from step c) and see that data has been persisted in the persistent volume on Linode which are subsequently reattached to their respective pods.
+</details>
 
-### 4. Deployment of a custom NodeJS-application image published and pulled from AWS ECR, with mongodb and mongo-express pods & services running
+-----
+
+<details closed>
+<summary><b>4. Deployment of a custom NodeJS-application image published and pulled from AWS ECR, with mongodb and mongo-express pods & services running</b></summary>
+
 
 a. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live, then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
 ```bash
@@ -262,8 +275,13 @@ vi index.html # and replace localhost with your minikube ip and 3000 with your l
 # then access minicube-ip:30001 in the browser or run
 minikube service node-app-service
 ```
+</details>
 
-### 5. Deployment of 11 replicated microservices with best-practice configuration via single k8s.yaml file
+-----
+
+<details closed>
+<summary><b>5. Deployment of 11 replicated microservices with best-practice configuration via single k8s.yaml file</b></summary>
+
 
 NOTE: The microservices app is a google developed multi-language application with service-to-service communication via gRPC. See https://github.com/GoogleCloudPlatform/microservices-demo/tree/main
 
@@ -287,8 +305,12 @@ kubectl apply -f k8s/microservices-best-practice.yaml
 ```
 
 d. Navigate to your Nodebalancer DNS host name to access the microservices frontend.
+</details>
 
-### 6. Deployment of 11 replicated microservices with several helm install commands bundled in a bash script
+-----
+
+<details closed>
+<summary><b>6. Deployment of 11 replicated microservices with several helm install commands bundled in a bash script</b></summary>
 
 a. Simply execute the following command from the git project root directory
 ```bash
@@ -298,74 +320,112 @@ bash scripts/helm-install-microservices.sh
 # uninstall
 bash scripts/helm-uninstall-microservices.sh 
 ```
+</details>
 
-### 7. Deployment of 11 replicated microservices with single helmfile apply command
+-----
+
+<details closed>
+<summary><b>7. Deployment of 11 replicated microservices with single helmfile apply command</b></summary>
 
 a. Simply execute the following command from the git project root directory
+
 ```bash
 # install
 KUBECONFIG=$(pwd)/test-cluster-kubeconfig.yaml \
-  helmfile apply \
-  --file helm/helmfile.yaml \
-  -n microservices
+helmfile apply \
+--file helm/helmfile.yaml \
+-n microservices
 # uninstall
 KUBECONFIG=$(pwd)/test-cluster-kubeconfig.yaml \
-  helmfile destroy \
-  --file helm/helmfile.yaml \
-  -n microservices
+helmfile destroy \
+--file helm/helmfile.yaml \
+-n microservices
 ```
+</details>
 
 ## Usage (Exercises)
 
-TODO
+<details closed>
+<summary><b>0. Test your java / mysql / phpmyadmin application locally with docker-compose </b></summary>
+
+a. Create `.env` file in `java-app/` folder and add where MYSQL_PASSWORD and DB_PWD have to be identical.
+Note: If you change MYSQL_DATABASE or MYSQL_USER you have to change those in `Dockerfile` too
+```bash
+# MYSQL INSTALLATION
+MYSQL_ROOT_PASSWORD=xxx
+MYSQL_DATABASE=team-member-projects
+MYSQL_USER=mysql-user
+MYSQL_PASSWORD=yyy
+# JAVA-APPLICATION
+DB_USER=mysql-user
+DB_SERVER=mysqldb
+DB_NAME=team-member-projects
+DB_PWD=yyy
+```
+
+b. Navigate to `java-app/` and run
+```bash
+VERSION_TAG=1.0 \
+docker compose -f docker-compose-java-app-mysql.yaml up
+
+```
+</details>
+
+-----
+
 
 ## Usage (Bonus Remote VPS Setup)
 
-1. First of all, we want to setup ArgoCD to use GitOps principles for writing declarative configuration, versioning, storing and running our k8s cluster 
+<details closed>
+<summary><b>1. Setup ArgoCD to use GitOps principles for writing declarative configuration, versioning, storing and running our k8s cluster </b></summary>
 
-    See https://argo-cd.readthedocs.io/en/stable/getting_started/
+See https://argo-cd.readthedocs.io/en/stable/getting_started/
 
-    a. Add `ARGOCD_ADMIN_PW=xxx` to `.env` file
+a. Add `ARGOCD_ADMIN_PW=xxx` to `.env` file
 
-    b. Navigate to `scripts/` folder and execute the installation script.
-    ```
-    ./remote-setup-ArgoCD.sh
-    ```
+b. Navigate to `scripts/` folder and execute the installation script.
+```bash
+./remote-setup-ArgoCD.sh
+```
+</details>
 
-2. We also want to setup ingress-nginx for minikube to handle incoming traffic from the outside world into our remote VPS
+-----
 
-    See https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
+<details closed>
+<summary><b>2. Setup ingress-nginx for minikube to handle incoming traffic from the outside world into our remote VPS</b></summary>
+See https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
 
-    a. Navigate to `scripts/` folder and execute the installation script.
-    ```
-    ./remote-setup-ingress-nginx.sh
-    ```
+a. Navigate to `scripts/` folder and execute the installation script.
+```bash
+./remote-setup-ingress-nginx.sh
+```
 
-    b. Install nginx reverse proxy to forward outside requests to the VPS to the minikube ip address on the ingress controller port. To configure nginx replace `proxy_pass` ip with your minikube ip from the output of step a)
-    ```
-    ssh root@<REMOTE_ADDRESS>
-    sudo apt update
-    sudo apt install nginx-full
+b. Install nginx reverse proxy to forward outside requests to the VPS to the minikube ip address on the ingress controller port. To configure nginx replace `proxy_pass` ip with your minikube ip from the output of step a)
+```bash
+ssh root@<REMOTE_ADDRESS>
+sudo apt update
+sudo apt install nginx-full
 
-    echo "
-    stream {
-        server {
-            listen 30080;
-            proxy_pass 192.168.49.2:80;
-        }
-        
-        server {
-            listen 30443;
-            proxy_pass 192.168.49.2:443;
-        }
+echo "
+stream {
+    server {
+        listen 30080;
+        proxy_pass 192.168.49.2:80;
     }
-    " >> /etc/nginx/nginx.conf
     
-    sudo nginx -t
+    server {
+        listen 30443;
+        proxy_pass 192.168.49.2:443;
+    }
+}
+" >> /etc/nginx/nginx.conf
+
+sudo nginx -t
+
+sudo systemctl restart nginx
+```
+You can access the plain site http://<REMOTE_ADDRESS>:30080 in a browser from any external device.
+You can access the TLS site https://<REMOTE_ADDRESS>:30443 in a browser from any external device.
+NOTE: HTTPS certificate config to remove security warning is a topic for another day. See potentially https://www.zepworks.com/posts/access-minikube-remotely-kvm/#4-certs or https://minikube.sigs.k8s.io/docs/handbook/untrusted_certs/ 
     
-    sudo systemctl restart nginx
-    ```
-    You can access the plain site http://<REMOTE_ADDRESS>:30080 in a browser from any external device.
-    You can access the TLS site https://<REMOTE_ADDRESS>:30443 in a browser from any external device.
-    NOTE: HTTPS certificate config to remove security warning is a topic for another day. See potentially https://www.zepworks.com/posts/access-minikube-remotely-kvm/#4-certs or https://minikube.sigs.k8s.io/docs/handbook/untrusted_certs/ 
-    
+</details>

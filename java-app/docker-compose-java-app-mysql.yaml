@@ -1,0 +1,54 @@
+version: '3.1'
+
+services:
+
+  mysqldb:
+    image: mysql:9.0.1
+    container_name: mysqldb
+    restart: always
+    ports:
+      - 3306:3306
+    env_file:
+      - .env
+    networks:
+      - mysql-db-gui
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:5.2.1-apache
+    container_name: phpmyadmin
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - 8085:80
+    networks:
+      - mysql-db-gui
+    links:
+      - mysqldb:db
+    depends_on:
+      - mysqldb
+  
+  java-app:
+    image: java-app:${VERSION_TAG}
+    container_name: java-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - 80:8080
+    networks:
+      - mysql-db-gui
+    depends_on:
+      - mysqldb
+
+networks:
+  mysql-db-gui:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    name: mysql-data
