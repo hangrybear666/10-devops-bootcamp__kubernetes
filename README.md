@@ -303,10 +303,15 @@ bash scripts/helm-uninstall-microservices.sh
 a. Simply execute the following command from the git project root directory
 ```bash
 # install
-KUBECONFIG=$(pwd)/test-cluster-kubeconfig.yaml helmfile apply --file helm/helmfile.yaml -n microservices
+KUBECONFIG=$(pwd)/test-cluster-kubeconfig.yaml \
+  helmfile apply \
+  --file helm/helmfile.yaml \
+  -n microservices
 # uninstall
-KUBECONFIG=$(pwd)/test-cluster-kubeconfig.yaml helmfile destroy --file helm/helmfile.yaml -n microservices
-
+KUBECONFIG=$(pwd)/test-cluster-kubeconfig.yaml \
+  helmfile destroy \
+  --file helm/helmfile.yaml \
+  -n microservices
 ```
 
 ## Usage (Exercises)
