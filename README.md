@@ -7,9 +7,9 @@ The main projects are:
 - A simple app with ConfigMap File and Secret File Volume Mounting for initializing containers with custom files
 - Managed k8s cluster on Linode running a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts
 - Deployment of a custom NodeJS-application image published and pulled from AWS ECR, with mongodb and mongo-express pods & services running
-- Deployment of 11 replicated microservices with best-practice k8s configuration in a Linode Manages Kubernetes Cluster
-- Deployment of 11 replicated microservices with Helm install commands bundled in a bash script
-- Deployment of 11 replicated microservices with Helmfile 
+- Deployment of 11 replicated microservices with best-practice configuration via single k8s.yaml file
+- Deployment of 11 replicated microservices with several helm install commands bundled in a bash script
+- Deployment of 11 replicated microservices with single helmfile apply command
 
 The bonus projects are:
 - An ArgoCD deployment in Kubernetes following GitOps principles for declarative configuration versioning and storage.
@@ -263,7 +263,7 @@ vi index.html # and replace localhost with your minikube ip and 3000 with your l
 minikube service node-app-service
 ```
 
-### 5. Deployment of 11 replicated microservices with best-practice k8s configuration in a Linode Manages Kubernetes Cluster
+### 5. Deployment of 11 replicated microservices with best-practice configuration via single k8s.yaml file
 
 NOTE: The microservices app is a google developed multi-language application with service-to-service communication via gRPC. See https://github.com/GoogleCloudPlatform/microservices-demo/tree/main
 
@@ -288,7 +288,7 @@ kubectl apply -f k8s/microservices-best-practice.yaml
 
 d. Navigate to your Nodebalancer DNS host name to access the microservices frontend.
 
-### 6. Deployment of 11 replicated microservices with Helm install commands bundled in a bash script
+### 6. Deployment of 11 replicated microservices with several helm install commands bundled in a bash script
 
 a. Simply execute the following command from the git project root directory
 ```bash
@@ -298,7 +298,7 @@ bash scripts/helm-install-microservices.sh
 bash scripts/helm-uninstall-microservices.sh 
 ```
 
-### 7. Deployment of 11 replicated microservices with Helmfile
+### 7. Deployment of 11 replicated microservices with single helmfile apply command
 
 a. Simply execute the following command from the git project root directory
 ```bash
