@@ -45,7 +45,7 @@ b. Run the installation script in `scripts/` folder and type `y` if you wish to 
 
 ### 3. Install additional dependencies 
 
-Install `jq` to parse json files. 
+Install `jq` to parse json files. Install `openssl` to generate random passwords for environment vars.
 
 ### 4. Install helm on your local OS
 
@@ -352,19 +352,10 @@ helmfile destroy \
 <details closed>
 <summary><b>0. Test your java / mysql / phpmyadmin application locally with docker-compose </b></summary>
 
-a. Create `.env` file in `java-app/` folder and add where MYSQL_PASSWORD and DB_PWD have to be identical.
-Note: If you change MYSQL_DATABASE or MYSQL_USER you have to change those in `Dockerfile` too
+a. Create `.env` file in `java-app/` folder by running the following script, generating random passwords via openssl for you.
 ```bash
-# MYSQL INSTALLATION
-MYSQL_ROOT_PASSWORD=xxx
-MYSQL_DATABASE=team-member-projects
-MYSQL_USER=mysql-user
-MYSQL_PASSWORD=yyy
-# JAVA-APPLICATION
-DB_USER=mysql-user
-DB_SERVER=mysqldb
-DB_NAME=team-member-projects
-DB_PWD=yyy
+cd scripts
+./create-exercise-env-vars.sh 
 ```
 
 b. Navigate to `java-app/` and run
@@ -377,6 +368,49 @@ docker compose -f docker-compose-java-app-mysql.yaml up
 
 -----
 
+
+<details closed>
+<summary><b>1. asd </b></summary>
+
+a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
+
+b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. 
+
+c. Create Secret from `java-app/.env` file created by the `./create-exercise-env-vars.sh` script in exercise step 0)
+```bash
+export KUBECONFIG=test-cluster-kubeconfig.yaml
+kubectl create namespace exercises
+kubectl create secret generic java-app-mysql-env \
+--from-env-file=java-app/.env \
+--namespace exercises
+```
+
+d. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live, then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
+```bash
+# setup docker registry credentials
+aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 010928217051.dkr.ecr.eu-central-1.amazonaws.com
+cp /home/$USER/.docker/config.json config/
+```
+
+e. Build and Push your NodeJS application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
+```bash
+docker build -t java-app:1.4 java-app/.
+docker tag java-app:1.4 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.4
+docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.4
+```
+
+f. Create secret from prior docker login step so kubernetes can pull the AWS ECR image
+```bash
+kubectl create secret generic aws-ecr-config \
+--from-file=.dockerconfigjson=config/config.json \
+--type=kubernetes.io/dockerconfigjson \
+--namespace exercises
+```
+
+
+</details>
+
+-----
 
 ## Usage (Bonus Remote VPS Setup)
 

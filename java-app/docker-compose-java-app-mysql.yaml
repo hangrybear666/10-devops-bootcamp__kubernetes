@@ -14,6 +14,12 @@ services:
       - mysql-db-gui
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysql --user=root --password=$MYSQL_ROOT_PASSWORD --execute \"SELECT 1\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
   phpmyadmin:
     image: phpmyadmin:5.2.1-apache
@@ -28,7 +34,8 @@ services:
     links:
       - mysqldb:db
     depends_on:
-      - mysqldb
+      mysqldb:
+        condition: service_healthy
   
   java-app:
     image: java-app:${VERSION_TAG}
@@ -43,7 +50,8 @@ services:
     networks:
       - mysql-db-gui
     depends_on:
-      - mysqldb
+      mysqldb:
+        condition: service_healthy
 
 networks:
   mysql-db-gui:
