@@ -12,6 +12,7 @@ Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps
 7. Deployment of 11 replicated microservices with single helmfile apply command
 
 <b><u>The exercise projects are:</u></b>
+*Work in Progress*
 - A SpringBoot Java App with mysql-db and phpmyadmin-ui running with k8s.yaml files via kubectl apply commands
 - A SpringBoot Java App with mysql-db and phpmyadmin-ui running 
 
@@ -368,9 +369,9 @@ docker compose -f docker-compose-java-app-mysql.yaml up
 
 -----
 
-
+*Work in Progress*
 <details closed>
-<summary><b>1. asd </b></summary>
+<summary><b>1. wip </b></summary>
 
 a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
 
