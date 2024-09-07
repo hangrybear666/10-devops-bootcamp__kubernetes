@@ -414,6 +414,8 @@ g. To start mysql, attached to a persistent linode block store volume, launch th
 ```bash
 kubectl apply -f k8s/exercises/01-mysql-statefulset.yaml
 kubectl apply -f k8s/exercises/01-java-app.yaml
+kubectl apply -f k8s/exercises/01-phpmyadmin-configmap.yaml
+kubectl apply -f k8s/exercises/01-phpmyadmin-deployment.yaml
 
 # temp create
 kubectl apply -f k8s/exercises/basic-subpar-examples/mysql-pvc.yaml
@@ -423,6 +425,8 @@ kubectl apply -f k8s/exercises/01-java-app.yaml
 kubectl delete -f k8s/exercises/01-java-app.yaml
 kubectl delete -f k8s/exercises/basic-subpar-examples/mysql-deployment.yaml
 kubectl delete -f k8s/exercises/basic-subpar-examples/mysql-pvc.yaml
+kubectl delete -f k8s/exercises/01-phpmyadmin-deployment.yaml
+kubectl delete -f k8s/exercises/01-phpmyadmin-configmap.yaml
 ```
 
 <details closed>
