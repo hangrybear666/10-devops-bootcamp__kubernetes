@@ -1,18 +1,19 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: java-app
+  name: mysqldb
   namespace: exercises
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: java-app
+      app: mysqldb
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
-        app: java-app
+        app: mysqldb
     spec:
       terminationGracePeriodSeconds: 5
       securityContext:
@@ -20,55 +21,57 @@ spec:
         runAsGroup: 1000
         runAsNonRoot: true
         runAsUser: 1000
-      imagePullSecrets:
-      - name: aws-ecr-config
       containers:
-      - name: java-app-container
-        image: 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.4
-        imagePullPolicy: IfNotPresent
+      - image: mysql:9.0.1
+        name: mysqldb-container
         envFrom:
         - secretRef:
             name: java-app-mysql-env
         ports:
-        - containerPort: 8080
+        - containerPort: 3306
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
               - ALL
           privileged: false
-          readOnlyRootFilesystem: false # security best pratice is true, but tomcat needs to create tmpdir 
+          #readOnlyRootFilesystem: true
         readinessProbe:
           tcpSocket:
-            port: 8080
-          initialDelaySeconds: 25
+            port: 3306
+          initialDelaySeconds: 10
           periodSeconds: 5
         livenessProbe:
           tcpSocket:
-            port: 8080
-          initialDelaySeconds: 25
+            port: 3306
+          initialDelaySeconds: 10
           periodSeconds: 5
         resources:
           requests:
-            cpu: 100m
-            memory: 128Mi
+            cpu: 500m
+            memory: 512Mi
           limits:
-            cpu: 200m
-            memory: 256Mi
+            cpu: 1000m
+            memory: 768Mi
+        volumeMounts:
+        - name: mysqldb-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysqldb-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: java-app
+  name: mysqldb
   namespace: exercises
-  labels:
-    app: java-app
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
-    app: java-app
+    app: mysqldb
   ports:
   - protocol: TCP
-    port: 80
-    targetPort: 8080
-    #nodePort: 30001
+    port: 3306
+    targetPort: 3306
+  #clusterIP: None

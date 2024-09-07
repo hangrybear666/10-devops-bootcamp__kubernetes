@@ -377,37 +377,69 @@ a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster ht
 
 b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. 
 
-c. Create Secret from `java-app/.env` file created by the `./create-exercise-env-vars.sh` script in exercise step 0)
-```bash
-export KUBECONFIG=test-cluster-kubeconfig.yaml
-kubectl create namespace exercises
-kubectl create secret generic java-app-mysql-env \
---from-env-file=java-app/.env \
---namespace exercises
-```
-
-d. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live, then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
+c. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live, then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
 ```bash
 # setup docker registry credentials
 aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 010928217051.dkr.ecr.eu-central-1.amazonaws.com
 cp /home/$USER/.docker/config.json config/
 ```
 
-e. Build and Push your NodeJS application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
+d. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
 ```bash
 docker build -t java-app:1.4 java-app/.
 docker tag java-app:1.4 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.4
 docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.4
 ```
 
-f. Create secret from prior docker login step so kubernetes can pull the AWS ECR image
+e. Create secret from prior docker login step so kubernetes can pull the AWS ECR image
 ```bash
+export KUBECONFIG=test-cluster-kubeconfig.yaml
+kubectl create namespace exercises
 kubectl create secret generic aws-ecr-config \
 --from-file=.dockerconfigjson=config/config.json \
 --type=kubernetes.io/dockerconfigjson \
 --namespace exercises
+# check if secret looks correct
+kubectl get secret aws-ecr-config -n exercises --output="jsonpath={.data.\.dockerconfigjson}" | base64 --decode
 ```
 
+f. Create Secret from `java-app/.env` file created by the `./create-exercise-env-vars.sh` script in exercise step 0)
+```bash
+kubectl create secret generic java-app-mysql-env \
+--from-env-file=java-app/.env \
+--namespace exercises
+```
+
+g. To start mysql, attached to a persistent linode block store volume, launch the java application and start phpmyadmin UI, run:
+```bash
+kubectl apply -f k8s/exercises/01-mysql-statefulset.yaml
+kubectl apply -f k8s/exercises/01-java-app.yaml
+
+# temp create
+kubectl apply -f k8s/exercises/basic-subpar-examples/mysql-pvc.yaml
+kubectl apply -f k8s/exercises/basic-subpar-examples/mysql-deployment.yaml
+kubectl apply -f k8s/exercises/01-java-app.yaml
+# temp del
+kubectl delete -f k8s/exercises/01-java-app.yaml
+kubectl delete -f k8s/exercises/basic-subpar-examples/mysql-deployment.yaml
+kubectl delete -f k8s/exercises/basic-subpar-examples/mysql-pvc.yaml
+```
+
+<details closed>
+<summary><b>interact with mysql & deployment</b></summary>
+
+Connect to mysql but replace "o3bGda+Y/ha8R3wk" after the `-p` flag at the end with your `MYSQL_ROOT_PASSWORD` in `java-app/.env` file.
+```bash
+kubectl run -it --rm --namespace=exercises --image=mysql:9.0.1 --restart=Never mysql-client -- mysql -h mysqldb -po3bGda+Y/ha8R3wk
+# debug 
+kubectl describe statefulset mysqldb -n exercises
+kubectl describe deployment java-app -n exercises
+# delete
+kubectl delete -f k8s/exercises/01-mysql-statefulset.yaml
+kubectl delete -f k8s/exercises/01-java-app.yaml
+kubectl delete pvc data-mysqldb-0 data-mysqldb-1 -n exercises
+```
+</details>
 
 </details>
 

@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysqldb
+  namespace: exercises
+  labels:
+    app: mysqldb
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mysqldb
+  serviceName: mysqldb
+  template:
+    metadata:
+      labels:
+        app: mysqldb
+    spec:
+      terminationGracePeriodSeconds: 5
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: mysqldb
+        image: mysql:9.0.1
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - secretRef:
+            name: java-app-mysql-env
+        ports:
+        - containerPort: 3306
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          #readOnlyRootFilesystem: true
+        readinessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 768Mi
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: mysqldb
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      #storageClassName: managed-nfs-storage
+      storageClassName: linode-block-storage-retain
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysqldb
+  namespace: exercises
+spec:
+  type: ClusterIP
+  selector:
+    app: mysqldb
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+  #clusterIP: None
