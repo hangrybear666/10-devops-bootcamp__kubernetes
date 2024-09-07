@@ -1,6 +1,6 @@
-# DESCRIPTION HEADER
+# Kubernetes manifests, helm charts, helmfiles and kubectl shell scripts to provision resources in managed Linode Kubernetes Engine
 
-DESCRIPTION DETAIL
+Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps, Secrets, PVCs, StatefulSets, internal & external Services, Ingress to deploy simple web-apps, or more complex microservices on the Linode Managed Kubernetes Engine. 
 
 <b><u>The main projects are:</u></b>
 1. A simple app with ConfigMap, locally generated Secret to avoid SCM exposure and external LoadBalancer Service in k8s cluster
