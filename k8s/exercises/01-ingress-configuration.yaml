@@ -3,14 +3,23 @@ kind: Ingress
 metadata:
   name: phpmyadmin-ingress
   namespace: exercises
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2 
+    # The $2 in this rewrite refers to the second capturing group from the regex, which is (.*). 
+    # This group captures whatever comes after /phpmyadmin. If nothing follows, $2 will be empty, 
+    # meaning a request to /phpmyadmin/ will be rewritten to /, effectively serving the phpMyAdmin root.
 spec:
   ingressClassName: nginx
   rules:
   - host: 172-105-146-124.ip.linodeusercontent.com
     http:
       paths:
-        - path: "/"
-          pathType: Prefix
+        - path: /phpmyadmin(/|$)(.*)
+        # This RegEx matches either:
+        # A trailing slash (/) after /phpmyadmin, or
+        # (.*) is a capturing group that matches any remaining part of the URL such as index.html
+          pathType: ImplementationSpecific
           backend:
             service:
               name: phpmyadmin
@@ -20,7 +29,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: java-ingress
+  name: java-app-ingress
   namespace: exercises
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
@@ -30,8 +39,8 @@ spec:
   - host: 172-105-146-124.ip.linodeusercontent.com
     http:
       paths:
-        - path: "/java-app"
-          pathType: Exact
+        - path: "/"
+          pathType: Prefix
           backend:
             service:
               name: java-app

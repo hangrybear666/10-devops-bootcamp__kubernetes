@@ -27,6 +27,11 @@ spec:
           ports:
             - containerPort: 80
           env:
+            - name: PMA_ABSOLUTE_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: phpmyadmin-configmap
+                  key: pma-absolute-uri
             - name: PMA_HOST
               valueFrom:
                 configMapKeyRef:
