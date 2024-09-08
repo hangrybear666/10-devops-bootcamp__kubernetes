@@ -73,7 +73,7 @@ metadata:
   name: phpmyadmin
   namespace: exercises
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: phpmyadmin
   ports:

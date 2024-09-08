@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: phpmyadmin-ingress
+  namespace: exercises
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: 172-105-146-124.ip.linodeusercontent.com
+    http:
+      paths:
+        - path: "/"
+          pathType: Prefix
+          backend:
+            service:
+              name: phpmyadmin
+              port:
+                number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: java-ingress
+  namespace: exercises
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: 172-105-146-124.ip.linodeusercontent.com
+    http:
+      paths:
+        - path: "/java-app"
+          pathType: Exact
+          backend:
+            service:
+              name: java-app
+              port:
+                number: 8080

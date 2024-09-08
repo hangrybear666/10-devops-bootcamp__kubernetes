@@ -13,7 +13,7 @@ Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps
 
 <b><u>The exercise projects are:</u></b>
 *Work in Progress*
-- A SpringBoot Java App with mysql-db and phpmyadmin-ui running with k8s.yaml files via kubectl apply commands
+1. Replicated SpringBoot Java & phpmyadmin Deployment with MySQL StatefulSet & PVC Block Storage, accessed via Ingress nginx-controller - started via kubectl apply commands
 - A SpringBoot Java App with mysql-db and phpmyadmin-ui running 
 
 <b><u>The bonus projects are:</u></b>
@@ -375,7 +375,7 @@ Then navigate to http://my-java-app.com/ for your java app.
 
 *Work in Progress*
 <details closed>
-<summary><b>1. wip </b></summary>
+<summary><b>1. Replicated SpringBoot Java & phpmyadmin Deployment with MySQL StatefulSet & PVC Block Storage, accessed via Ingress nginx-controller - started via kubectl apply commands</b></summary>
 
 a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
 
@@ -388,14 +388,7 @@ aws ecr get-login-password --region eu-central-1 | docker login --username AWS -
 cp /home/$USER/.docker/config.json config/
 ```
 
-d. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
-```bash
-docker build -t java-app:1.4 java-app/.
-docker tag java-app:1.4 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.4
-docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.4
-```
-
-e. Create secret from prior docker login step so kubernetes can pull the AWS ECR image
+d. Create secret from prior docker login step so kubernetes can pull the AWS ECR image
 ```bash
 export KUBECONFIG=test-cluster-kubeconfig.yaml
 kubectl create namespace exercises
@@ -407,7 +400,7 @@ kubectl create secret generic aws-ecr-config \
 kubectl get secret aws-ecr-config -n exercises --output="jsonpath={.data.\.dockerconfigjson}" | base64 --decode
 ```
 
-f. Create Secret from `java-app/.env` file created by the `./create-exercise-env-vars.sh` script in exercise step 0)
+e. Create Secret from `java-app/.env` file created by the `./create-exercise-env-vars.sh` script in exercise step 0)
 ```bash
 kubectl create secret generic java-app-mysql-env \
 --from-env-file=java-app/.env \
@@ -417,22 +410,54 @@ kubectl get secret java-app-mysql-env -n exercises -o yaml
 
 ```
 
-g. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume, launch the java application (replicas:2) and start phpmyadmin UI, run:
+f. Add nginx-ingress-controller to route incoming traffic from Linode's NodeBalancer to the phpmyadmin & java-app internal ClusterIP Service. Installation of the Helm chart also automatically sets up a NodeBalancer on Linode, the public dns name of which we have to save and replace in `k8s/exercises/01-ingress-configuration.yaml` in the `- host: ` value
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install nginx-ingress ingress-nginx/ingress-nginx --version 4.11.2 --namespace exercises
+```
+
+g. Before pushing the docker image to remote, change the HOST variable in line 48 of your `java-app/src/main/resources/static/index.html` to your Linode NodeBalancer DNS Name followed by `/java-app`. For example my entry looks like this:
+```js
+const HOST = "172-105-146-124.ip.linodeusercontent.com/java-app";
+```
+
+h. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
+```bash
+docker build -t java-app:1.7 java-app/.
+docker tag java-app:1.7 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.7
+docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.7
+```
+
+i. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume, launch the java application (replicas:2) and start phpmyadmin UI, with an ingress-nginx controller for external access, run:
+
+*NOTE: replace image name in `k8s/exercises/01-java-app-deployment.yaml` with your own*
+*NOTE: replace hostname in `k8s/helm-ingress.yaml` with your Linode NodeBalancer dns name*
+
 ```bash
 kubectl apply -f k8s/exercises/01-mysql-statefulset.yaml
+# change java image name to your own
 kubectl apply -f k8s/exercises/01-java-app-deployment.yaml
 kubectl apply -f k8s/exercises/01-phpmyadmin-configmap.yaml
 kubectl apply -f k8s/exercises/01-phpmyadmin-deployment.yaml
+# add Linode NodeBalancer hostname to k8s/helm-ingress.yaml 
+kubectl apply -f k8s/exercises/01-ingress-configuration.yaml
 
 # del
 kubectl delete -f k8s/exercises/01-mysql-statefulset.yaml
 kubectl delete -f k8s/exercises/01-java-app-deployment.yaml
 kubectl delete -f k8s/exercises/01-phpmyadmin-deployment.yaml
 kubectl delete -f k8s/exercises/01-phpmyadmin-configmap.yaml
+kubectl delete -f k8s/exercises/01-ingress-configuration.yaml
 kubectl delete pvc data-mysqldb-0 data-mysqldb-1 -n exercises
 kubectl delete secret java-app-mysql-env -n exercises
 kubectl delete secret aws-ecr-config -n exercises
+helm uninstall nginx-ingress --namespace exercises
 ```
+
+j. Access the java application on your Linode NodeBalancer DNS Name's root url followed by `/java-app` for example `172-105-146-124.ip.linodeusercontent.com/java-app`
+
+k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url for example `172-105-146-124.ip.linodeusercontent.com` 
 
 
 <details closed>
