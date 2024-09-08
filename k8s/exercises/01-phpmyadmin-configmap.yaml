@@ -6,3 +6,4 @@ metadata:
 data:
   pma-host: mysqldb
   pma-port: "3306"
+  pma-arbitrary-server-address: "0"

@@ -16,39 +16,14 @@ spec:
         app: phpmyadmin
     spec:
       terminationGracePeriodSeconds: 5
-      #securityContext:
-      #  fsGroup: 1000
-      #  runAsGroup: 1000
-      #  runAsNonRoot: true
-      #  runAsUser: 1000
       containers:
         - name: phpmyadmin
           image: phpmyadmin:5.2.1-apache
           ports:
             - containerPort: 80
           env:
-            - name: PMA_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: phpmyadmin-configmap
-                  key: pma-host
-            - name: PMA_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: phpmyadmin-configmap
-                  key: pma-port
             - name: PMA_ARBITRARY
-              valueFrom:
-                configMapKeyRef:
-                  name: phpmyadmin-configmap
-                  key: pma-arbitrary-server-address
-          #securityContext:
-          #  allowPrivilegeEscalation: false
-          #  capabilities:
-          #    drop:
-          #      - ALL
-          #  privileged: false
-          #  readOnlyRootFilesystem: true
+              value: "1"
           readinessProbe:
             tcpSocket:
               port: 80

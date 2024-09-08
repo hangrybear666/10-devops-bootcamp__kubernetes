@@ -6,7 +6,7 @@ metadata:
   labels:
     app: mysqldb
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: mysqldb
@@ -67,7 +67,7 @@ spec:
       accessModes:
       - ReadWriteOnce
       #storageClassName: managed-nfs-storage
-      storageClassName: linode-block-storage-retain
+      storageClassName: linode-block-storage
       resources:
         requests:
           storage: 10Gi
@@ -85,4 +85,3 @@ spec:
   - protocol: TCP
     port: 3306
     targetPort: 3306
-  #clusterIP: None

@@ -359,12 +359,16 @@ cd scripts
 ./create-exercise-env-vars.sh 
 ```
 
-b. Navigate to `java-app/` and run
+b. Add local dns name forwarding to your /etc/hosts file by adding the following entry: `127.0.0.1 my-java-app.com`
+
+c. Navigate to `java-app/` and run
 ```bash
 VERSION_TAG=1.0 \
 docker compose -f docker-compose-java-app-mysql.yaml up
-
 ```
+
+d. Navigate to http://localhost:8085/ for phpmyadmin using `DB_USER` and `DB_PWD` for login.
+Then navigate to http://my-java-app.com/ for your java app.
 </details>
 
 -----
@@ -408,26 +412,28 @@ f. Create Secret from `java-app/.env` file created by the `./create-exercise-env
 kubectl create secret generic java-app-mysql-env \
 --from-env-file=java-app/.env \
 --namespace exercises
+# check if secret looks correct
+kubectl get secret java-app-mysql-env -n exercises -o yaml
+
 ```
 
-g. To start mysql, attached to a persistent linode block store volume, launch the java application and start phpmyadmin UI, run:
+g. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume, launch the java application (replicas:2) and start phpmyadmin UI, run:
 ```bash
 kubectl apply -f k8s/exercises/01-mysql-statefulset.yaml
-kubectl apply -f k8s/exercises/01-java-app.yaml
+kubectl apply -f k8s/exercises/01-java-app-deployment.yaml
 kubectl apply -f k8s/exercises/01-phpmyadmin-configmap.yaml
 kubectl apply -f k8s/exercises/01-phpmyadmin-deployment.yaml
 
-# temp create
-kubectl apply -f k8s/exercises/basic-subpar-examples/mysql-pvc.yaml
-kubectl apply -f k8s/exercises/basic-subpar-examples/mysql-deployment.yaml
-kubectl apply -f k8s/exercises/01-java-app.yaml
-# temp del
-kubectl delete -f k8s/exercises/01-java-app.yaml
-kubectl delete -f k8s/exercises/basic-subpar-examples/mysql-deployment.yaml
-kubectl delete -f k8s/exercises/basic-subpar-examples/mysql-pvc.yaml
+# del
+kubectl delete -f k8s/exercises/01-mysql-statefulset.yaml
+kubectl delete -f k8s/exercises/01-java-app-deployment.yaml
 kubectl delete -f k8s/exercises/01-phpmyadmin-deployment.yaml
 kubectl delete -f k8s/exercises/01-phpmyadmin-configmap.yaml
+kubectl delete pvc data-mysqldb-0 data-mysqldb-1 -n exercises
+kubectl delete secret java-app-mysql-env -n exercises
+kubectl delete secret aws-ecr-config -n exercises
 ```
+
 
 <details closed>
 <summary><b>interact with mysql & deployment</b></summary>
@@ -438,10 +444,7 @@ kubectl run -it --rm --namespace=exercises --image=mysql:9.0.1 --restart=Never m
 # debug 
 kubectl describe statefulset mysqldb -n exercises
 kubectl describe deployment java-app -n exercises
-# delete
-kubectl delete -f k8s/exercises/01-mysql-statefulset.yaml
-kubectl delete -f k8s/exercises/01-java-app.yaml
-kubectl delete pvc data-mysqldb-0 data-mysqldb-1 -n exercises
+kubectl describe deployment phpmyadmin -n exercises
 ```
 </details>
 
