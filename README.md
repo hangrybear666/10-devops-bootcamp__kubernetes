@@ -14,7 +14,7 @@ Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps
 <b><u>The exercise projects are:</u></b>
 *Work in Progress*
 1. Replicated SpringBoot Java & phpmyadmin Deployment with MySQL StatefulSet & PVC Block Storage, accessed via Ingress nginx-controller - started via kubectl apply commands
-wip) A SpringBoot Java App with mysql-db and phpmyadmin-ui running 
+2. ......
 
 <b><u>The bonus projects are:</u></b>
 1. An ArgoCD deployment in Kubernetes following GitOps principles for declarative configuration versioning and storage.
@@ -418,7 +418,7 @@ helm install nginx-ingress ingress-nginx/ingress-nginx --version 4.11.2 --namesp
 
 g. Before pushing the docker image to remote, change the HOST variable in line 48 of your `java-app/src/main/resources/static/index.html` to your Linode NodeBalancer DNS Name, for example:
 ```js
-const HOST = "172-105-146-124.ip.linodeusercontent.com";
+const HOST = "172-xxx-xxx-124.ip.linodeusercontent.com";
 ```
 
 h. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
@@ -431,24 +431,26 @@ docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.
 i. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume, launch the java application (replicas:2) and start phpmyadmin UI, with an ingress-nginx controller for external access, replace the following values and then run the script.
 
 *NOTE: replace image name in `k8s/exercises/01-java-app-deployment.yaml` with your own*
+
 *NOTE: replace hostname in `k8s/exercises/01-ingress-configuration.yaml` with your Linode NodeBalancer dns name in <b>both</b> Ingress resources*
+
 *NOTE: replace pma-absolute-uri in `k8s/exercises/01-phpmyadmin-configmap.yaml` with your own but it <b>has</b> to end with `/phpmyadmin/` or the Ingress Regex Path Redirect won't work*
 
 ```bash
 kubectl apply -f k8s/exercises/01-mysql-statefulset.yaml
-# change java image name to your own
+# change java image name to your own remote ecr img
 kubectl apply -f k8s/exercises/01-java-app-deployment.yaml
 # replace Linode NodeBalancer hostname in pma-absolute-uri 
 kubectl apply -f k8s/exercises/01-phpmyadmin-configmap.yaml
 kubectl apply -f k8s/exercises/01-phpmyadmin-deployment.yaml
-# add Linode NodeBalancer hostname to k8s/helm-ingress.yaml 
+# add Linode NodeBalancer hostname to both Ingress resources
 kubectl apply -f k8s/exercises/01-ingress-configuration.yaml
 
 ```
 
-j. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-105-146-124.ip.linodeusercontent.com`
+j. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-xxx-xxx-124.ip.linodeusercontent.com`
 
-k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-105-146-124.ip.linodeusercontent.com/phpmyadmin/` 
+k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/` 
 
 <details closed>
 <summary><b>Commands to connect to db, debug, delete all resources</b></summary>
