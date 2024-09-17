@@ -7,4 +7,4 @@ data:
   pma-host: mysqldb
   pma-port: "3306"
   pma-arbitrary-server-address: "0"
-  pma-absolute-uri: "http://172-105-146-124.ip.linodeusercontent.com/phpmyadmin/"
+  pma-absolute-uri: "http://139-144-161-146.ip.linodeusercontent.com/phpmyadmin/"

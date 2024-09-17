@@ -2,7 +2,7 @@
 
 Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps, Secrets, PVCs, StatefulSets, internal & external Services, Ingress to deploy simple web-apps, or more complex microservices on the Linode Managed Kubernetes Engine. 
 
-<b><u>The main projects are:</u></b>
+<b><u>The basic course examples are:</u></b>
 1. A simple app with ConfigMap, locally generated Secret to avoid SCM exposure and external LoadBalancer Service in k8s cluster
 2. A simple app with ConfigMap File and Secret File Volume Mounting for initializing containers with custom files
 3. Managed k8s cluster on Linode running a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts
@@ -11,9 +11,9 @@ Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps
 6. Deployment of 11 replicated microservices with several helm install commands bundled in a bash script
 7. Deployment of 11 replicated microservices with single helmfile apply command
 
-<b><u>The exercise projects are:</u></b>
+<b><u>The advanced exercise projects are:</u></b>
 *Work in Progress*
-1. Replicated SpringBoot Java & phpmyadmin Deployment with MySQL StatefulSet & PVC Block Storage, accessed via Ingress nginx-controller - started via kubectl apply commands
+1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via kubectl apply commands
 2. ......
 
 <b><u>The bonus projects are:</u></b>
@@ -59,7 +59,7 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
 Find the binary link for your OS at https://github.com/helmfile/helmfile/releases
 ```bash
-curl -O https://github.com/helmfile/helmfile/releases/download/v1.0.0-rc.4/helmfile_1.0.0-rc.4_linux_386.tar.gz
+curl -LO https://github.com/helmfile/helmfile/releases/download/v1.0.0-rc.4/helmfile_1.0.0-rc.4_linux_386.tar.gz
 tar -xzf helmfile_1.0.0-rc.4_linux_386.tar.gz --wildcards '*helmfile'
 sudo chmod +x helmfile
 sudo mv helmfile /usr/bin/helmfile
@@ -374,7 +374,7 @@ Then navigate to http://my-java-app.com/ for your java app.
 -----
 
 <details closed>
-<summary><b>1. Replicated SpringBoot Java & phpmyadmin Deployment with MySQL StatefulSet & PVC Block Storage, accessed via Ingress nginx-controller - started via kubectl apply commands</b></summary>
+<summary><b>1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via kubectl apply commands</b></summary>
 
 a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
 
@@ -416,16 +416,16 @@ helm repo update
 helm install nginx-ingress ingress-nginx/ingress-nginx --version 4.11.2 --namespace exercises
 ```
 
-g. Before pushing the docker image to remote, change the HOST variable in line 48 of your `java-app/src/main/resources/static/index.html` to your Linode NodeBalancer DNS Name, for example:
+g. Before building and pushing the docker image to remote, change the HOST variable in line 48 of your `java-app/src/main/resources/static/index.html` to your Linode NodeBalancer DNS Name, for example:
 ```js
 const HOST = "172-xxx-xxx-124.ip.linodeusercontent.com";
 ```
 
 h. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
 ```bash
-docker build -t java-app:1.8 java-app/.
-docker tag java-app:1.8 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.8
-docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.8
+docker build -t java-app:2.0 java-app/.
+docker tag java-app:2.0 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.0
+docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.0
 ```
 
 i. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume, launch the java application (replicas:2) and start phpmyadmin UI, with an ingress-nginx controller for external access, replace the following values and then run the script.

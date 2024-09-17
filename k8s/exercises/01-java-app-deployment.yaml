@@ -24,7 +24,7 @@ spec:
       - name: aws-ecr-config
       containers:
       - name: java-app-container
-        image: 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-1.8
+        image: 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.0
         imagePullPolicy: IfNotPresent
         envFrom:
         - secretRef:
@@ -50,11 +50,11 @@ spec:
           periodSeconds: 5
         resources:
           requests:
-            cpu: 100m
-            memory: 128Mi
+            cpu: 150m
+            memory: 192Mi
           limits:
-            cpu: 200m
-            memory: 256Mi
+            cpu: 250m
+            memory: 320Mi
 ---
 apiVersion: v1
 kind: Service
