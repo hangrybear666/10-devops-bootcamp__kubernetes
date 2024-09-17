@@ -4,7 +4,7 @@ metadata:
   name: phpmyadmin-configmap
   namespace: exercises
 data:
-  pma-host: mysqldb
+  pma-host: mysql-0.mysql
   pma-port: "3306"
-  pma-arbitrary-server-address: "0"
+  pma-arbitrary-server-address: "1"
   pma-absolute-uri: "http://143-42-222-246.ip.linodeusercontent.com/phpmyadmin/"

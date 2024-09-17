@@ -20,7 +20,7 @@ MYSQL_USER=mysql-user
 MYSQL_PASSWORD=$RANDOM_PASSWORD
 # JAVA-APPLICATION
 DB_USER=mysql-user
-DB_SERVER=mysqldb
+DB_SERVER=mysql-0.mysql
 DB_NAME=team-member-projects
 DB_PWD=$RANDOM_PASSWORD" > .env
 

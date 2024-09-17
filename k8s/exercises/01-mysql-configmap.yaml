@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mysql
-  namespace: default
+  namespace: exercises
   labels:
     app: mysql
     app.kubernetes.io/name: mysql

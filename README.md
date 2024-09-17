@@ -423,9 +423,9 @@ const HOST = "172-xxx-xxx-124.ip.linodeusercontent.com";
 
 h. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
 ```bash
-docker build -t java-app:2.1 java-app/.
-docker tag java-app:2.1 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.1
-docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.1
+docker build -t java-app:2.3 java-app/.
+docker tag java-app:2.3 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.3
+docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.3
 ```
 
 i. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume, launch the java application (replicas:2) and start phpmyadmin UI, with an ingress-nginx controller for external access, replace the following values and then run the script.
@@ -437,6 +437,8 @@ i. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent 
 *NOTE: replace pma-absolute-uri in `k8s/exercises/01-phpmyadmin-configmap.yaml` with your own but it <b>has</b> to end with `/phpmyadmin/` or the Ingress Regex Path Redirect won't work*
 
 ```bash
+kubectl apply -f k8s/exercises/01-mysql-configmap.yaml
+kubectl apply -f k8s/exercises/01-mysql-service.yaml
 kubectl apply -f k8s/exercises/01-mysql-statefulset.yaml
 # change java image name to your own remote ecr img
 kubectl apply -f k8s/exercises/01-java-app-deployment.yaml
@@ -455,23 +457,43 @@ k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by
 <details closed>
 <summary><b>Commands to connect to db, debug, delete all resources</b></summary>
 
-Connect to mysql but replace "o3bGda+Y/ha8R3wk" after the `-p` flag at the end with your `MYSQL_ROOT_PASSWORD` in `java-app/.env` file.
 ```bash
 kubectl run -it --rm --namespace=exercises --image=mysql:9.0.1 --restart=Never mysql-client -- mysql -h mysqldb -pa+XMLuFoJR6NQnHk
 # debug 
-kubectl describe statefulset mysqldb -n exercises
+kubectl describe statefulset mysql -n exercises
 kubectl describe deployment java-app -n exercises
 kubectl describe deployment phpmyadmin -n exercises
 
+source java-app/.env
+# query data inserted by java-app
+kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
+  mysql -h mysql-0.mysql -u $MYSQL_USER -p$MYSQL_PASSWORD team-member-projects <<EOF
+SELECT member_name, member_role FROM team_members;
+EOF
+
+# create new database with root user
+kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
+  mysql -h mysql-0.mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
+CREATE DATABASE test;
+CREATE TABLE test.messages (message VARCHAR(250));
+INSERT INTO test.messages VALUES ('hello');
+EOF
+
+# loop through read replicas
+kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --namespace=exercises --restart=Never --  bash -ic "while sleep 1; do mysql -h mysql-read -u root -p$MYSQL_ROOT_PASSWORD -e 'SELECT member_name, member_role FROM team_members;'; done"
+
 # delete all resources
 kubectl delete -f k8s/exercises/01-mysql-statefulset.yaml
+kubectl delete -f k8s/exercises/01-mysql-service.yaml
+kubectl delete -f k8s/exercises/01-mysql-configmap.yaml
 kubectl delete -f k8s/exercises/01-java-app-deployment.yaml
 kubectl delete -f k8s/exercises/01-phpmyadmin-deployment.yaml
 kubectl delete -f k8s/exercises/01-phpmyadmin-configmap.yaml
 kubectl delete -f k8s/exercises/01-ingress-configuration.yaml
-kubectl delete pvc data-mysqldb-0 data-mysqldb-1 -n exercises
+kubectl delete pvc data-mysql-0 data-mysql-1 data-mysql-2 -n exercises
 kubectl delete secret java-app-mysql-env -n exercises
 kubectl delete secret aws-ecr-config -n exercises
+# keep to retain nodebalancer dns name
 helm uninstall nginx-ingress --namespace exercises
 ```
 </details>
@@ -484,28 +506,8 @@ helm uninstall nginx-ingress --namespace exercises
 <summary><b>2. testing stuff</b></summary>
 
 ```bash
-# apply
-kubectl apply -f k8s/exercises/02-mysql-configmap.yaml
-kubectl apply -f k8s/exercises/02-mysql-service.yaml
-kubectl apply -f k8s/exercises/02-mysql-statefulset.yaml
-kubectl get pods -l app=mysql --watch
+# asd
 
-# DML
-source java-app/.env
-kubectl run mysql-client --image=mysql:5.7 -i --rm --restart=Never --\
-  mysql -h mysql-0.mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
-CREATE DATABASE test;
-CREATE TABLE test.messages (message VARCHAR(250));
-INSERT INTO test.messages VALUES ('hello');
-EOF
-
-kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --restart=Never --  bash -ic "while sleep 1; do mysql -h mysql-read -u root -p$MYSQL_ROOT_PASSWORD -e 'SELECT @@server_id, NOW(),( SELECT message from test.messages order by message asc LIMIT 1);'; done"
-
-# delete
-kubectl delete -f k8s/exercises/02-mysql-service.yaml
-kubectl delete -f k8s/exercises/02-mysql-statefulset.yaml
-kubectl delete -f k8s/exercises/02-mysql-configmap.yaml
-kubectl delete pvc data-mysql-0 data-mysql-1 data-mysql-2
 ```
 
 </details>

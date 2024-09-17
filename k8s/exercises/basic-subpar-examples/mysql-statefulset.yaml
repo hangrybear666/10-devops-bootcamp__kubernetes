@@ -1,18 +1,20 @@
----
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: java-app
+  name: mysqldb
   namespace: exercises
+  labels:
+    app: mysqldb
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: java-app
+      app: mysqldb
+  serviceName: mysqldb
   template:
     metadata:
       labels:
-        app: java-app
+        app: mysqldb
     spec:
       terminationGracePeriodSeconds: 5
       securityContext:
@@ -20,55 +22,66 @@ spec:
         runAsGroup: 1000
         runAsNonRoot: true
         runAsUser: 1000
-      imagePullSecrets:
-      - name: aws-ecr-config
       containers:
-      - name: java-app-container
-        image: 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.3
+      - name: mysqldb
+        image: mysql:9.0.1
         imagePullPolicy: IfNotPresent
         envFrom:
         - secretRef:
             name: java-app-mysql-env
         ports:
-        - containerPort: 8080
+        - containerPort: 3306
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
               - ALL
           privileged: false
-          readOnlyRootFilesystem: false # security best pratice is true, but tomcat needs to create tmpdir 
+          #readOnlyRootFilesystem: true
         readinessProbe:
           tcpSocket:
-            port: 8080
-          initialDelaySeconds: 25
+            port: 3306
+          initialDelaySeconds: 10
           periodSeconds: 5
         livenessProbe:
           tcpSocket:
-            port: 8080
-          initialDelaySeconds: 25
+            port: 3306
+          initialDelaySeconds: 10
           periodSeconds: 5
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
         resources:
           requests:
-            cpu: 150m
-            memory: 192Mi
+            cpu: 300m
+            memory: 512Mi
           limits:
-            cpu: 250m
-            memory: 320Mi
+            cpu: 500m
+            memory: 768Mi
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: mysqldb
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      #storageClassName: managed-nfs-storage
+      storageClassName: linode-block-storage
+      resources:
+        requests:
+          storage: 10Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: java-app
+  name: mysqldb
   namespace: exercises
-  labels:
-    app: java-app
 spec:
   type: ClusterIP
   selector:
-    app: java-app
+    app: mysqldb
   ports:
   - protocol: TCP
-    port: 80
-    targetPort: 8080
-    #nodePort: 30001
+    port: 3306
+    targetPort: 3306
