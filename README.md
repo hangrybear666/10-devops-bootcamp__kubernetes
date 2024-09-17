@@ -480,6 +480,36 @@ helm uninstall nginx-ingress --namespace exercises
 
 -----
 
+<details closed>
+<summary><b>2. testing stuff</b></summary>
+
+```bash
+# apply
+kubectl apply -f k8s/exercises/02-mysql-configmap.yaml
+kubectl apply -f k8s/exercises/02-mysql-service.yaml
+kubectl apply -f k8s/exercises/02-mysql-statefulset.yaml
+
+# DML
+kubectl run mysql-client --image=mysql:5.7 -i --rm --restart=Never --\
+  mysql -h mysql-0.mysql <<EOF
+CREATE DATABASE test;
+CREATE TABLE test.messages (message VARCHAR(250));
+INSERT INTO test.messages VALUES ('hello');
+EOF
+
+kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --restart=Never --  bash -ic "while sleep 1; do mysql -h mysql-read -e 'SELECT @@server_id, NOW(),( SELECT message from test.messages order by message asc LIMIT 1);'; done"
+
+# delete
+kubectl delete -f k8s/exercises/02-mysql-service.yaml
+kubectl delete -f k8s/exercises/02-mysql-statefulset.yaml
+kubectl delete -f k8s/exercises/02-mysql-configmap.yaml
+kubectl delete pvc data-mysql-0 data-mysql-1 data-mysql-2
+```
+
+</details>
+
+-----
+
 ## Usage (Bonus Remote VPS Setup)
 
 <details closed>
