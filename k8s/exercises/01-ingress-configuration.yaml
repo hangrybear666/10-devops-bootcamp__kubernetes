@@ -12,7 +12,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: 139-144-161-146.ip.linodeusercontent.com
+  - host: 143-42-222-246.ip.linodeusercontent.com
     http:
       paths:
         - path: /phpmyadmin(/|$)(.*)
@@ -36,7 +36,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: 139-144-161-146.ip.linodeusercontent.com
+  - host: 143-42-222-246.ip.linodeusercontent.com
     http:
       paths:
         - path: "/"

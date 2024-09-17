@@ -24,7 +24,7 @@ spec:
       - name: aws-ecr-config
       containers:
       - name: java-app-container
-        image: 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.0
+        image: 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.1
         imagePullPolicy: IfNotPresent
         envFrom:
         - secretRef:

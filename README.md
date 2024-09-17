@@ -423,9 +423,9 @@ const HOST = "172-xxx-xxx-124.ip.linodeusercontent.com";
 
 h. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
 ```bash
-docker build -t java-app:2.0 java-app/.
-docker tag java-app:2.0 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.0
-docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.0
+docker build -t java-app:2.1 java-app/.
+docker tag java-app:2.1 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.1
+docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.1
 ```
 
 i. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume, launch the java application (replicas:2) and start phpmyadmin UI, with an ingress-nginx controller for external access, replace the following values and then run the script.
@@ -457,7 +457,7 @@ k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by
 
 Connect to mysql but replace "o3bGda+Y/ha8R3wk" after the `-p` flag at the end with your `MYSQL_ROOT_PASSWORD` in `java-app/.env` file.
 ```bash
-kubectl run -it --rm --namespace=exercises --image=mysql:9.0.1 --restart=Never mysql-client -- mysql -h mysqldb -po3bGda+Y/ha8R3wk
+kubectl run -it --rm --namespace=exercises --image=mysql:9.0.1 --restart=Never mysql-client -- mysql -h mysqldb -pa+XMLuFoJR6NQnHk
 # debug 
 kubectl describe statefulset mysqldb -n exercises
 kubectl describe deployment java-app -n exercises
