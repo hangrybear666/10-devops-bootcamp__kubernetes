@@ -23,8 +23,6 @@ services:
     image: phpmyadmin:5.2.1-apache
     container_name: phpmyadmin
     restart: always
-    env_file:
-      - .env
     ports:
       - 8085:80
     networks:
@@ -43,6 +41,8 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env
+    environment:
+      - DB_SERVER=${DB_SERVER_OVERRIDE}
     ports:
       - 80:8080
     networks:

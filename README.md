@@ -2,6 +2,11 @@
 
 Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps, Secrets, PVCs, StatefulSets, internal & external Services, Ingress to deploy simple web-apps, or more complex microservices on the Linode Managed Kubernetes Engine. 
 
+<b><u>The advanced exercise projects are:</u></b>
+*Work in Progress*
+1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via kubectl apply commands
+2. ......
+
 <b><u>The basic course examples are:</u></b>
 1. A simple app with ConfigMap, locally generated Secret to avoid SCM exposure and external LoadBalancer Service in k8s cluster
 2. A simple app with ConfigMap File and Secret File Volume Mounting for initializing containers with custom files
@@ -11,10 +16,6 @@ Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps
 6. Deployment of 11 replicated microservices with several helm install commands bundled in a bash script
 7. Deployment of 11 replicated microservices with single helmfile apply command
 
-<b><u>The advanced exercise projects are:</u></b>
-*Work in Progress*
-1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via kubectl apply commands
-2. ......
 
 <b><u>The bonus projects are:</u></b>
 1. An ArgoCD deployment in Kubernetes following GitOps principles for declarative configuration versioning and storage.
@@ -67,7 +68,175 @@ helmfile init
 # install plugins by agreeing with "y"
 ```
 
-## Usage (Demo Projects)
+## Usage (Exercises)
+
+<details closed>
+<summary><b>0. Test your java / mysql / phpmyadmin application locally with docker-compose </b></summary>
+
+a. Create `.env` file in `java-app/` folder by running the following script, generating random passwords via openssl for you.
+```bash
+cd scripts
+./create-exercise-env-vars.sh 
+```
+
+b. Add local dns name forwarding to your /etc/hosts file by adding the following entry: `127.0.0.1 my-java-app.com`
+
+d. Navigate to `java-app/` and run
+```bash
+VERSION_TAG=1.0 \
+DB_SERVER_OVERRIDE=mysqldb \
+docker compose -f docker-compose-java-app-mysql.yaml up
+```
+
+d. Navigate to http://localhost:8085/ for phpmyadmin using `DB_USER` and `DB_PWD` for login.
+Then navigate to http://my-java-app.com/ for your java app.
+</details>
+
+-----
+
+<details closed>
+<summary><b>1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via kubectl apply commands</b></summary>
+
+a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
+
+b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. 
+
+c. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live, then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
+```bash
+# setup docker registry credentials
+aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 010928217051.dkr.ecr.eu-central-1.amazonaws.com
+cp /home/$USER/.docker/config.json config/
+```
+
+d. Create secret from prior docker login step so kubernetes can pull the AWS ECR image
+```bash
+export KUBECONFIG=test-cluster-kubeconfig.yaml
+kubectl create namespace exercises
+kubectl create secret generic aws-ecr-config \
+--from-file=.dockerconfigjson=config/config.json \
+--type=kubernetes.io/dockerconfigjson \
+--namespace exercises
+# check if secret looks correct
+kubectl get secret aws-ecr-config -n exercises --output="jsonpath={.data.\.dockerconfigjson}" | base64 --decode
+```
+
+e. Create Secret from `java-app/.env` file created by the `./create-exercise-env-vars.sh` script in exercise step 0)
+```bash
+kubectl create secret generic java-app-mysql-env \
+--from-env-file=java-app/.env \
+--namespace exercises
+# check if secret looks correct
+kubectl get secret java-app-mysql-env -n exercises -o yaml
+
+```
+
+f. Add nginx-ingress-controller to route incoming traffic from Linode's NodeBalancer to the phpmyadmin & java-app internal ClusterIP Service. Installation of the Helm chart also automatically sets up a NodeBalancer on Linode, the public dns name of which we have to save and replace in `k8s/exercises/01-ingress-configuration.yaml` in the `- host: ` value
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install nginx-ingress ingress-nginx/ingress-nginx --version 4.11.2 --namespace exercises
+```
+
+g. Before building and pushing the docker image to remote, change the HOST variable in line 48 of your `java-app/src/main/resources/static/index.html` to your Linode NodeBalancer DNS Name, for example:
+```js
+const HOST = "172-xxx-xxx-124.ip.linodeusercontent.com";
+```
+
+h. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
+```bash
+docker build -t java-app:2.3 java-app/.
+docker tag java-app:2.3 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.3
+docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.3
+```
+
+i. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume, launch the java application (replicas:2) and start phpmyadmin UI, with an ingress-nginx controller for external access, replace the following values and then run the script.
+
+*NOTE: replace image name in `k8s/exercises/01-java-app-deployment.yaml` with your own*
+
+*NOTE: replace hostname in `k8s/exercises/01-ingress-configuration.yaml` with your Linode NodeBalancer dns name in <b>both</b> Ingress resources*
+
+*NOTE: replace pma-absolute-uri in `k8s/exercises/01-phpmyadmin-configmap.yaml` with your own but it <b>has</b> to end with `/phpmyadmin/` or the Ingress Regex Path Redirect won't work*
+
+```bash
+kubectl apply -f k8s/exercises/01-mysql-configmap.yaml
+kubectl apply -f k8s/exercises/01-mysql-service.yaml
+kubectl apply -f k8s/exercises/01-mysql-statefulset.yaml
+# change java image name to your own remote ecr img
+kubectl apply -f k8s/exercises/01-java-app-deployment.yaml
+# replace Linode NodeBalancer hostname in pma-absolute-uri 
+kubectl apply -f k8s/exercises/01-phpmyadmin-configmap.yaml
+kubectl apply -f k8s/exercises/01-phpmyadmin-deployment.yaml
+# add Linode NodeBalancer hostname to both Ingress resources
+kubectl apply -f k8s/exercises/01-ingress-configuration.yaml
+
+```
+
+j. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-xxx-xxx-124.ip.linodeusercontent.com`
+
+k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/` 
+
+<details closed>
+<summary><b>Commands to connect to db, debug, delete all resources</b></summary>
+
+```bash
+kubectl run -it --rm --namespace=exercises --image=mysql:9.0.1 --restart=Never mysql-client -- mysql -h mysqldb -pa+XMLuFoJR6NQnHk
+# debug 
+kubectl describe statefulset mysql -n exercises
+kubectl describe deployment java-app -n exercises
+kubectl describe deployment phpmyadmin -n exercises
+
+source java-app/.env
+# query data inserted by java-app
+kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
+  mysql -h mysql-0.mysql -u $MYSQL_USER -p$MYSQL_PASSWORD team-member-projects <<EOF
+SELECT member_name, member_role FROM team_members;
+EOF
+
+# create new database with root user
+kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
+  mysql -h mysql-0.mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
+CREATE DATABASE test;
+CREATE TABLE test.messages (message VARCHAR(250));
+INSERT INTO test.messages VALUES ('hello');
+EOF
+
+# loop through read replicas
+kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --namespace=exercises --restart=Never --  bash -ic "while sleep 1; do mysql -h mysql-read -u root -p$MYSQL_ROOT_PASSWORD -e 'SELECT member_name, member_role FROM team_members;'; done"
+
+# delete all resources
+kubectl delete -f k8s/exercises/01-mysql-statefulset.yaml
+kubectl delete -f k8s/exercises/01-mysql-service.yaml
+kubectl delete -f k8s/exercises/01-mysql-configmap.yaml
+kubectl delete -f k8s/exercises/01-java-app-deployment.yaml
+kubectl delete -f k8s/exercises/01-phpmyadmin-deployment.yaml
+kubectl delete -f k8s/exercises/01-phpmyadmin-configmap.yaml
+kubectl delete -f k8s/exercises/01-ingress-configuration.yaml
+kubectl delete pvc data-mysql-0 data-mysql-1 data-mysql-2 -n exercises
+kubectl delete secret java-app-mysql-env -n exercises
+kubectl delete secret aws-ecr-config -n exercises
+# keep to retain nodebalancer dns name
+helm uninstall nginx-ingress --namespace exercises
+```
+</details>
+
+</details>
+
+-----
+
+<details closed>
+<summary><b>2. testing stuff</b></summary>
+
+```bash
+# asd
+
+```
+
+</details>
+
+-----
+
+
+## Usage (basic course examples)
 
 <details closed>
 <summary><b>1. Deploy a simple application with ConfigMap, locally generated Secret to avoid SCM exposure and external LoadBalancer Service in k8s cluster</b></summary>
@@ -346,170 +515,6 @@ helmfile destroy \
 --file helm/helmfile.yaml \
 -n microservices
 ```
-</details>
-
-## Usage (Exercises)
-
-<details closed>
-<summary><b>0. Test your java / mysql / phpmyadmin application locally with docker-compose </b></summary>
-
-a. Create `.env` file in `java-app/` folder by running the following script, generating random passwords via openssl for you.
-```bash
-cd scripts
-./create-exercise-env-vars.sh 
-```
-
-b. Add local dns name forwarding to your /etc/hosts file by adding the following entry: `127.0.0.1 my-java-app.com`
-
-c. Navigate to `java-app/` and run
-```bash
-VERSION_TAG=1.0 \
-docker compose -f docker-compose-java-app-mysql.yaml up
-```
-
-d. Navigate to http://localhost:8085/ for phpmyadmin using `DB_USER` and `DB_PWD` for login.
-Then navigate to http://my-java-app.com/ for your java app.
-</details>
-
------
-
-<details closed>
-<summary><b>1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via kubectl apply commands</b></summary>
-
-a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
-
-b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. 
-
-c. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live, then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
-```bash
-# setup docker registry credentials
-aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 010928217051.dkr.ecr.eu-central-1.amazonaws.com
-cp /home/$USER/.docker/config.json config/
-```
-
-d. Create secret from prior docker login step so kubernetes can pull the AWS ECR image
-```bash
-export KUBECONFIG=test-cluster-kubeconfig.yaml
-kubectl create namespace exercises
-kubectl create secret generic aws-ecr-config \
---from-file=.dockerconfigjson=config/config.json \
---type=kubernetes.io/dockerconfigjson \
---namespace exercises
-# check if secret looks correct
-kubectl get secret aws-ecr-config -n exercises --output="jsonpath={.data.\.dockerconfigjson}" | base64 --decode
-```
-
-e. Create Secret from `java-app/.env` file created by the `./create-exercise-env-vars.sh` script in exercise step 0)
-```bash
-kubectl create secret generic java-app-mysql-env \
---from-env-file=java-app/.env \
---namespace exercises
-# check if secret looks correct
-kubectl get secret java-app-mysql-env -n exercises -o yaml
-
-```
-
-f. Add nginx-ingress-controller to route incoming traffic from Linode's NodeBalancer to the phpmyadmin & java-app internal ClusterIP Service. Installation of the Helm chart also automatically sets up a NodeBalancer on Linode, the public dns name of which we have to save and replace in `k8s/exercises/01-ingress-configuration.yaml` in the `- host: ` value
-```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo update
-helm install nginx-ingress ingress-nginx/ingress-nginx --version 4.11.2 --namespace exercises
-```
-
-g. Before building and pushing the docker image to remote, change the HOST variable in line 48 of your `java-app/src/main/resources/static/index.html` to your Linode NodeBalancer DNS Name, for example:
-```js
-const HOST = "172-xxx-xxx-124.ip.linodeusercontent.com";
-```
-
-h. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
-```bash
-docker build -t java-app:2.3 java-app/.
-docker tag java-app:2.3 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.3
-docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.3
-```
-
-i. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume, launch the java application (replicas:2) and start phpmyadmin UI, with an ingress-nginx controller for external access, replace the following values and then run the script.
-
-*NOTE: replace image name in `k8s/exercises/01-java-app-deployment.yaml` with your own*
-
-*NOTE: replace hostname in `k8s/exercises/01-ingress-configuration.yaml` with your Linode NodeBalancer dns name in <b>both</b> Ingress resources*
-
-*NOTE: replace pma-absolute-uri in `k8s/exercises/01-phpmyadmin-configmap.yaml` with your own but it <b>has</b> to end with `/phpmyadmin/` or the Ingress Regex Path Redirect won't work*
-
-```bash
-kubectl apply -f k8s/exercises/01-mysql-configmap.yaml
-kubectl apply -f k8s/exercises/01-mysql-service.yaml
-kubectl apply -f k8s/exercises/01-mysql-statefulset.yaml
-# change java image name to your own remote ecr img
-kubectl apply -f k8s/exercises/01-java-app-deployment.yaml
-# replace Linode NodeBalancer hostname in pma-absolute-uri 
-kubectl apply -f k8s/exercises/01-phpmyadmin-configmap.yaml
-kubectl apply -f k8s/exercises/01-phpmyadmin-deployment.yaml
-# add Linode NodeBalancer hostname to both Ingress resources
-kubectl apply -f k8s/exercises/01-ingress-configuration.yaml
-
-```
-
-j. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-xxx-xxx-124.ip.linodeusercontent.com`
-
-k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/` 
-
-<details closed>
-<summary><b>Commands to connect to db, debug, delete all resources</b></summary>
-
-```bash
-kubectl run -it --rm --namespace=exercises --image=mysql:9.0.1 --restart=Never mysql-client -- mysql -h mysqldb -pa+XMLuFoJR6NQnHk
-# debug 
-kubectl describe statefulset mysql -n exercises
-kubectl describe deployment java-app -n exercises
-kubectl describe deployment phpmyadmin -n exercises
-
-source java-app/.env
-# query data inserted by java-app
-kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
-  mysql -h mysql-0.mysql -u $MYSQL_USER -p$MYSQL_PASSWORD team-member-projects <<EOF
-SELECT member_name, member_role FROM team_members;
-EOF
-
-# create new database with root user
-kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
-  mysql -h mysql-0.mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
-CREATE DATABASE test;
-CREATE TABLE test.messages (message VARCHAR(250));
-INSERT INTO test.messages VALUES ('hello');
-EOF
-
-# loop through read replicas
-kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --namespace=exercises --restart=Never --  bash -ic "while sleep 1; do mysql -h mysql-read -u root -p$MYSQL_ROOT_PASSWORD -e 'SELECT member_name, member_role FROM team_members;'; done"
-
-# delete all resources
-kubectl delete -f k8s/exercises/01-mysql-statefulset.yaml
-kubectl delete -f k8s/exercises/01-mysql-service.yaml
-kubectl delete -f k8s/exercises/01-mysql-configmap.yaml
-kubectl delete -f k8s/exercises/01-java-app-deployment.yaml
-kubectl delete -f k8s/exercises/01-phpmyadmin-deployment.yaml
-kubectl delete -f k8s/exercises/01-phpmyadmin-configmap.yaml
-kubectl delete -f k8s/exercises/01-ingress-configuration.yaml
-kubectl delete pvc data-mysql-0 data-mysql-1 data-mysql-2 -n exercises
-kubectl delete secret java-app-mysql-env -n exercises
-kubectl delete secret aws-ecr-config -n exercises
-# keep to retain nodebalancer dns name
-helm uninstall nginx-ingress --namespace exercises
-```
-</details>
-
-</details>
-
------
-
-<details closed>
-<summary><b>2. testing stuff</b></summary>
-
-```bash
-# asd
-
-```
-
 </details>
 
 -----
