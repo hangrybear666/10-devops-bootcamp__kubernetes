@@ -488,16 +488,18 @@ helm uninstall nginx-ingress --namespace exercises
 kubectl apply -f k8s/exercises/02-mysql-configmap.yaml
 kubectl apply -f k8s/exercises/02-mysql-service.yaml
 kubectl apply -f k8s/exercises/02-mysql-statefulset.yaml
+kubectl get pods -l app=mysql --watch
 
 # DML
+source java-app/.env
 kubectl run mysql-client --image=mysql:5.7 -i --rm --restart=Never --\
-  mysql -h mysql-0.mysql <<EOF
+  mysql -h mysql-0.mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
 CREATE DATABASE test;
 CREATE TABLE test.messages (message VARCHAR(250));
 INSERT INTO test.messages VALUES ('hello');
 EOF
 
-kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --restart=Never --  bash -ic "while sleep 1; do mysql -h mysql-read -e 'SELECT @@server_id, NOW(),( SELECT message from test.messages order by message asc LIMIT 1);'; done"
+kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --restart=Never --  bash -ic "while sleep 1; do mysql -h mysql-read -u root -p$MYSQL_ROOT_PASSWORD -e 'SELECT @@server_id, NOW(),( SELECT message from test.messages order by message asc LIMIT 1);'; done"
 
 # delete
 kubectl delete -f k8s/exercises/02-mysql-service.yaml
