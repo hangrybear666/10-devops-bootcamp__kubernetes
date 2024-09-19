@@ -185,24 +185,6 @@ kubectl describe statefulset mysql -n exercises
 kubectl describe deployment java-app -n exercises
 kubectl describe deployment phpmyadmin -n exercises
 
-source java-app/.env
-# query data inserted by java-app
-kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
-  mysql -h mysql-0.mysql -u $MYSQL_USER -p$MYSQL_PASSWORD team-member-projects <<EOF
-SELECT member_name, member_role FROM team_members;
-EOF
-
-# create new database with root user
-kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
-  mysql -h mysql-0.mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
-CREATE DATABASE test;
-CREATE TABLE test.messages (message VARCHAR(250));
-INSERT INTO test.messages VALUES ('hello');
-EOF
-
-# loop through read replicas
-kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --namespace=exercises --restart=Never --  bash -ic "while sleep 1; do mysql -h mysql-read -u root -p$MYSQL_ROOT_PASSWORD -e 'SELECT member_name, member_role FROM team_members;'; done"
-
 # delete all resources
 kubectl delete -f k8s/exercises/01-mysql-statefulset.yaml
 kubectl delete -f k8s/exercises/01-mysql-service.yaml
@@ -216,6 +198,42 @@ kubectl delete secret java-app-mysql-env -n exercises
 kubectl delete secret aws-ecr-config -n exercises
 # keep to retain nodebalancer dns name
 helm uninstall nginx-ingress --namespace exercises
+
+#             __   __           __        ___  __     ___  __  
+#   |\/| \ / /__` /  \ |       /  \ |  | |__  |__) | |__  /__` 
+#   |  |  |  .__/ \__X |___    \__X \__/ |___ |  \ | |___ .__/ 
+source java-app/.env
+# create new database with root user and insert
+kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
+  mysql -h mysql-0.mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
+CREATE DATABASE test;
+CREATE TABLE test.messages (id INT AUTO_INCREMENT PRIMARY KEY, message VARCHAR(250));
+INSERT INTO test.messages (message) VALUES ('hello from master replica mysql-0.mysql');
+EOF
+
+# this should throw an error since it tries to insert into read-only replica
+kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
+  mysql -h mysql-1.mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
+INSERT INTO test.messages (message) VALUES ('hello from read-only replica mysql-1.mysql');
+EOF
+
+# select all messages
+kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
+  mysql -h mysql-0.mysql -u root -p$MYSQL_ROOT_PASSWORD test <<EOF
+SELECT 
+    message
+FROM messages;
+EOF
+
+# query data inserted by java-app
+kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
+  mysql -h mysql-read -u $MYSQL_USER -p$MYSQL_PASSWORD team-member-projects <<EOF
+SELECT member_name, member_role FROM team_members;
+EOF
+
+# loop through read replicas
+kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --namespace=exercises --restart=Never --  bash -ic "while sleep 1; do mysql -h mysql-read -u root -p$MYSQL_ROOT_PASSWORD -e 'SELECT @@server_id,NOW(), (SELECT message from test.messages ORDER BY id desc LIMIT 1) as testquery'; done"
+
 ```
 </details>
 

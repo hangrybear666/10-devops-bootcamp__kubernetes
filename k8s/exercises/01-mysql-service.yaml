@@ -16,6 +16,7 @@ spec:
 ---
 # Client service for connecting to any MySQL instance for reads.
 # For writes, you must instead connect to the primary: mysql-0.mysql
+# P.S. sometimes writes can be possible through mysql-read service if it chooses the root replica at random!
 apiVersion: v1
 kind: Service
 metadata:
