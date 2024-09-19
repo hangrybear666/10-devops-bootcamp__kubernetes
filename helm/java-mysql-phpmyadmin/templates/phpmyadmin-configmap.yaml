@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Values.phpmyadminAppName }}-configmap"
+  namespace: {{ .Values.nameSpace }}
+data:
+  pma-absolute-uri: "http://{{ .Values.nodeBalancerPublicDns }}/phpmyadmin/"
+  {{- range $key, $value := .Values.phpmyadminData}}
+  {{ $key }}: {{ $value | quote }}
+  {{- end}}

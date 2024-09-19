@@ -1,0 +1,6 @@
+apiVersion: v2
+name: java-mysql-phpmyadmin
+description: A Helm chart for write & read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment
+type: application
+version: 2.3
+appVersion: "2.3"

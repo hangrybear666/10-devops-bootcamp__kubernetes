@@ -1,0 +1,73 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.javaAppName }}
+  namespace: {{ .Values.nameSpace }}
+spec:
+  replicas: {{ .Values.javaReplicaCount | default .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.javaAppName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.javaAppName }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      securityContext:
+        fsGroup: {{ .Values.fsGroup }}
+        runAsGroup: {{ .Values.runAsGroup }}
+        runAsNonRoot: {{ .Values.runAsNonRoot }}
+        runAsUser: {{ .Values.runAsUser }}
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecrets }}
+      containers:
+      - name: "{{ .Values.javaAppName }}-container"
+        image: "{{ .Values.ecrImageRepository }}/{{ .Values.ecrImageName }}:{{ .Values.javaImageTag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        envFrom:
+        - secretRef:
+            name: {{ .Values.javaMysqlEnvSecret }}
+        ports:
+        - containerPort: {{ .Values.javaContainerPort }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: false # security best pratice is true, but tomcat needs to create tmpdir 
+        readinessProbe:
+          tcpSocket:
+            port: {{ .Values.javaContainerPort }}
+          initialDelaySeconds: {{ add .Values.readinessProbeInitialDelay 20 }}
+          periodSeconds: {{ .Values.readinessProbePeriod }}
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.javaContainerPort }}
+          initialDelaySeconds: {{ add .Values.livenessProbeInitialDelay 20 }}
+          periodSeconds: {{ .Values.livenessProbePeriod }}
+        resources:
+          requests:
+            cpu: {{ .Values.cpuRequested }}
+            memory: {{ .Values.memoryRequested }}
+          limits:
+            cpu: {{ .Values.cpuLimit }}
+            memory: {{ .Values.memoryLimit }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.javaAppName }}
+  namespace: {{ .Values.nameSpace }}
+  labels:
+    app: {{ .Values.javaAppName }}
+spec:
+  type: {{ .Values.javaServiceType | default .Values.serviceType }}
+  selector:
+    app: {{ .Values.javaAppName }}
+  ports:
+  - protocol: {{ .Values.serviceProtocol }}
+    port: {{ .Values.javaServicePort }} 
+    targetPort: {{ .Values.javaContainerPort }}

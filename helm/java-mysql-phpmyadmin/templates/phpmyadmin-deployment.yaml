@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.phpmyadminAppName }}
+  namespace: {{ .Values.nameSpace }}
+  labels:
+    app: {{ .Values.phpmyadminAppName }}
+spec:
+  replicas: {{ .Values.phpmyadminReplicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.phpmyadminAppName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.phpmyadminAppName }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      #securityContext:
+      #  fsGroup: 1000
+      #  runAsGroup: 1000
+      #  runAsNonRoot: true
+      #  runAsUser: 1000
+      containers:
+        - name: "{{ .Values.phpmyadminAppName }}-container"
+          image: {{ .Values.phpmyadminImage }}
+          ports:
+            - containerPort: {{ .Values.phpmyadminContainerPort }}
+          env:
+            {{- range .Values.phpmyadminEnv }}
+              - name: {{ .name }}
+                valueFrom:
+                  configMapKeyRef:
+                    name: "{{ $.Values.phpmyadminAppName }}-configmap"
+                    key: {{ .key }}
+            {{- end }}
+          #securityContext:
+          #  allowPrivilegeEscalation: false
+          #  capabilities:
+          #    drop:
+          #      - ALL
+          #  privileged: false
+          #  readOnlyRootFilesystem: true
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.phpmyadminContainerPort }}
+            initialDelaySeconds: {{ add .Values.readinessProbeInitialDelay 5 }}
+            periodSeconds: {{ .Values.readinessProbePeriod }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.phpmyadminContainerPort }}
+            initialDelaySeconds: {{ add .Values.livenessProbeInitialDelay 5 }}
+            periodSeconds: {{ .Values.livenessProbePeriod }}
+          resources:
+            requests:
+              cpu: {{ .Values.cpuRequested }}
+              memory: {{ .Values.memoryRequested }}
+            limits:
+              cpu: {{ .Values.cpuLimit }}
+              memory: {{ .Values.memoryLimit }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.phpmyadminAppName }}
+  namespace: {{ .Values.nameSpace }}
+spec:
+  type: {{ .Values.serviceType }}
+  selector:
+    app: {{ .Values.phpmyadminAppName }}
+  ports:
+  - protocol: {{ .Values.serviceProtocol }}
+    port: {{ .Values.phpmyadminServicePort }} 
+    targetPort: {{ .Values.phpmyadminContainerPort }}

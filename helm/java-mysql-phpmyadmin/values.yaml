@@ -1,0 +1,26 @@
+# Default values for java-mysql-phpmyadmin.
+# Can be overwritten with own value files or --set option in cli
+
+serviceType: ClusterIP
+serviceProtocol: TCP
+ingressClassName: nginx
+replicaCount: 2
+nameSpace: exercises
+
+fsGroup: 1000
+runAsGroup: 1000
+runAsNonRoot: true
+runAsUser: 1000
+terminationGracePeriodSeconds: 5
+imagePullPolicy: IfNotPresent
+cpuRequested: 100m
+memoryRequested: 128Mi
+cpuLimit: 200m
+memoryLimit: 256Mi
+readinessProbeInitialDelay: 5
+readinessProbePeriod: 5
+livenessProbeInitialDelay: 5
+livenessProbePeriod: 5
+--- 
+
+

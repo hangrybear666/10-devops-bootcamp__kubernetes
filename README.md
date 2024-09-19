@@ -4,8 +4,8 @@ Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps
 
 <b><u>The advanced exercise projects are:</u></b>
 *Work in Progress*
-1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via kubectl apply commands
-2. ......
+1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started manually via kubectl apply commands
+2. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via shell script running helm charts
 
 <b><u>The basic course examples are:</u></b>
 1. A simple app with ConfigMap, locally generated Secret to avoid SCM exposure and external LoadBalancer Service in k8s cluster
@@ -95,7 +95,7 @@ Then navigate to http://my-java-app.com/ for your java app.
 -----
 
 <details closed>
-<summary><b>1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via kubectl apply commands</b></summary>
+<summary><b>1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started manually via kubectl apply commands</b></summary>
 
 a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
 
@@ -242,13 +242,26 @@ kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --namespace=exercises
 -----
 
 <details closed>
-<summary><b>2. testing stuff</b></summary>
+<summary><b>2. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via shell script running helm charts</b></summary>
+
+a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
+
+b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. 
+
+c. Navigate to scripts folder and run the shell script providing your AWS ECR url, AWS ECR repo name, NodeBalancer Public DNS, and desired Java Application version. The script then 1) logs in to aws ecr 2) exports kubeconfig 3) creates namespace and secrets 4) installs nginx ingress 5) replaces the index.html HOST address with your Nodebalancer DNS Name 6) builds and pushes the java app image 7) installs the helmchart 
+```bash
+cd scripts
+./helm-launch-exercises.sh
+cd .. && watch -n 5 'kubectl get all -n exercises'
+```
+d. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-xxx-xxx-124.ip.linodeusercontent.com`
+
+e. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/` 
 
 ```bash
-# asd
-
+# to delete all resources
+./helm-teardown-exercises.sh
 ```
-
 </details>
 
 -----

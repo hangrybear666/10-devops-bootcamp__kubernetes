@@ -1,0 +1,45 @@
+# override with --set in helm install command
+ecrImageRepository: 010928217051.dkr.ecr.eu-central-1.amazonaws.com
+ecrImageName: k8s-imgs
+nodeBalancerPublicDns: 143-42-222-246.ip.linodeusercontent.com
+javaImageTag: java-app-2.3
+# secrets
+imagePullSecrets: aws-ecr-config
+javaMysqlEnvSecret: java-app-mysql-env
+# mysql
+mysqlAppName: mysql
+mysqlConfig:
+  primary: |
+    # Apply this config only on the primary.
+    [mysqld]
+    log-bin
+  replica: |
+    # Apply this config only on replicas.
+    [mysqld]
+    super-read-only
+mysqlContainerPort: 3306
+# phpmyadmin
+phpmyadminAppName: phpmyadmin
+phpmyadminReplicaCount: 1
+phpmyadminImage: phpmyadmin:5.2.1-apache
+phpmyadminData:
+  pma-host: mysql-0.mysql
+  pma-port: "3306"
+  pma-arbitrary-server-address: "1"
+phpmyadminEnv:
+  - name: PMA_ABSOLUTE_URI
+    key: pma-absolute-uri
+  - name: PMA_HOST
+    key: pma-host
+  - name: PMA_PORT
+    key: pma-port
+  - name: PMA_ARBITRARY
+    key: pma-arbitrary-server-address
+phpmyadminContainerPort: 80
+phpmyadminServicePort: 80
+phpmyadminIngressPath: /phpmyadmin(/|$)(.*)
+# java-app
+javaAppName: java-app
+javaContainerPort: 8080
+javaServicePort: 80
+javaIngressPath: "/"
