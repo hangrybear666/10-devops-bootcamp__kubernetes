@@ -50,11 +50,11 @@ spec:
           periodSeconds: {{ .Values.livenessProbePeriod }}
         resources:
           requests:
-            cpu: {{ .Values.cpuRequested }}
-            memory: {{ .Values.memoryRequested }}
+            cpu: {{ .Values.javaAppCpuRequested }}
+            memory: {{ .Values.javaAppMemoryRequested }}
           limits:
-            cpu: {{ .Values.cpuLimit }}
-            memory: {{ .Values.memoryLimit }}
+            cpu: {{ .Values.javaAppCpuLimit }}
+            memory: {{ .Values.javaAppMemoryLimit }}
 ---
 apiVersion: v1
 kind: Service
@@ -69,5 +69,5 @@ spec:
     app: {{ .Values.javaAppName }}
   ports:
   - protocol: {{ .Values.serviceProtocol }}
-    port: {{ .Values.javaServicePort }} 
+    port: {{ .Values.javaServicePort }}
     targetPort: {{ .Values.javaContainerPort }}

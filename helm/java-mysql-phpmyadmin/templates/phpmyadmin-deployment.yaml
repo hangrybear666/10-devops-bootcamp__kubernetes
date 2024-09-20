@@ -24,6 +24,7 @@ spec:
       containers:
         - name: "{{ .Values.phpmyadminAppName }}-container"
           image: {{ .Values.phpmyadminImage }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
           ports:
             - containerPort: {{ .Values.phpmyadminContainerPort }}
           env:

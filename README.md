@@ -1,11 +1,11 @@
 # Kubernetes manifests, helm charts, helmfiles and kubectl shell scripts to provision resources in managed Linode Kubernetes Engine
 
-Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps, Secrets, PVCs, StatefulSets, internal & external Services, Ingress to deploy simple web-apps, or more complex microservices on the Linode Managed Kubernetes Engine. 
+Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps, Secrets, PVCs, StatefulSets, internal & external Services, Ingress to deploy simple web-apps, or more complex microservices on the Linode Managed Kubernetes Engine.
 
 <b><u>The advanced exercise projects are:</u></b>
 *Work in Progress*
-1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started manually via kubectl apply commands
-2. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via shell script running helm charts
+1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - <b>started manually via kubectl apply commands</b>
+2. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - <b>started via shell script running helm charts</b>
 
 <b><u>The basic course examples are:</u></b>
 1. A simple app with ConfigMap, locally generated Secret to avoid SCM exposure and external LoadBalancer Service in k8s cluster
@@ -31,7 +31,7 @@ git clone https://github.com/hangrybear666/10-devops-bootcamp__kubernetes.git
 ```
 ### 2. Install Minikube on your local OS (or in our case a remote VPS)
 
-For local development simply follow https://minikube.sigs.k8s.io/docs/start/. 
+For local development simply follow https://minikube.sigs.k8s.io/docs/start/.
 
 The following steps execute automatic installation on remote debian based VPS:
 
@@ -43,9 +43,9 @@ b. Run the installation script in `scripts/` folder and type `y` if you wish to 
 ./remote-install-minikube.sh
 # If you want to remove docker and/or minikube run
 ./remote-uninstall-minikube.sh
-``` 
+```
 
-### 3. Install additional dependencies 
+### 3. Install additional dependencies
 
 Install `jq` to parse json files. Install `openssl` to generate random passwords for environment vars.
 
@@ -76,7 +76,7 @@ helmfile init
 a. Create `.env` file in `java-app/` folder by running the following script, generating random passwords via openssl for you.
 ```bash
 cd scripts
-./create-exercise-env-vars.sh 
+./create-exercise-env-vars.sh
 ```
 
 b. Add local dns name forwarding to your /etc/hosts file by adding the following entry: `127.0.0.1 my-java-app.com`
@@ -97,9 +97,9 @@ Then navigate to http://my-java-app.com/ for your java app.
 <details closed>
 <summary><b>1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started manually via kubectl apply commands</b></summary>
 
-a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
+a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient.
 
-b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. 
+b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data.
 
 c. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live, then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
 ```bash
@@ -163,7 +163,7 @@ kubectl apply -f k8s/exercises/01-mysql-service.yaml
 kubectl apply -f k8s/exercises/01-mysql-statefulset.yaml
 # change java image name to your own remote ecr img
 kubectl apply -f k8s/exercises/01-java-app-deployment.yaml
-# replace Linode NodeBalancer hostname in pma-absolute-uri 
+# replace Linode NodeBalancer hostname in pma-absolute-uri
 kubectl apply -f k8s/exercises/01-phpmyadmin-configmap.yaml
 kubectl apply -f k8s/exercises/01-phpmyadmin-deployment.yaml
 # add Linode NodeBalancer hostname to both Ingress resources
@@ -173,14 +173,14 @@ kubectl apply -f k8s/exercises/01-ingress-configuration.yaml
 
 j. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-xxx-xxx-124.ip.linodeusercontent.com`
 
-k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/` 
+k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/`
 
 <details closed>
 <summary><b>Commands to connect to db, debug, delete all resources</b></summary>
 
 ```bash
 kubectl run -it --rm --namespace=exercises --image=mysql:9.0.1 --restart=Never mysql-client -- mysql -h mysqldb -pa+XMLuFoJR6NQnHk
-# debug 
+# debug
 kubectl describe statefulset mysql -n exercises
 kubectl describe deployment java-app -n exercises
 kubectl describe deployment phpmyadmin -n exercises
@@ -199,9 +199,9 @@ kubectl delete secret aws-ecr-config -n exercises
 # keep to retain nodebalancer dns name
 helm uninstall nginx-ingress --namespace exercises
 
-#             __   __           __        ___  __     ___  __  
-#   |\/| \ / /__` /  \ |       /  \ |  | |__  |__) | |__  /__` 
-#   |  |  |  .__/ \__X |___    \__X \__/ |___ |  \ | |___ .__/ 
+#             __   __           __        ___  __     ___  __
+#   |\/| \ / /__` /  \ |       /  \ |  | |__  |__) | |__  /__`
+#   |  |  |  .__/ \__X |___    \__X \__/ |___ |  \ | |___ .__/
 source java-app/.env
 # create new database with root user and insert
 kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
@@ -220,7 +220,7 @@ EOF
 # select all messages
 kubectl run mysql-client --image=mysql:5.7 -i --rm --namespace=exercises --restart=Never --\
   mysql -h mysql-0.mysql -u root -p$MYSQL_ROOT_PASSWORD test <<EOF
-SELECT 
+SELECT
     message
 FROM messages;
 EOF
@@ -244,11 +244,11 @@ kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --namespace=exercises
 <details closed>
 <summary><b>2. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via shell script running helm charts</b></summary>
 
-a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
+a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient.
 
-b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. 
+b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data.
 
-c. Navigate to scripts folder and run the shell script providing your AWS ECR url, AWS ECR repo name, NodeBalancer Public DNS, and desired Java Application version. The script then 1) logs in to aws ecr 2) exports kubeconfig 3) creates namespace and secrets 4) installs nginx ingress 5) replaces the index.html HOST address with your Nodebalancer DNS Name 6) builds and pushes the java app image 7) installs the helmchart 
+c. Navigate to scripts folder and run the shell script providing your AWS ECR url, AWS ECR repo name, NodeBalancer Public DNS, and desired Java Application version. The script then 1) logs in to aws ecr 2) exports kubeconfig 3) creates namespace and secrets 4) installs nginx ingress 5) replaces the index.html HOST address with your Nodebalancer DNS Name 6) builds and pushes the java app image 7) installs the helmchart
 ```bash
 cd scripts
 ./helm-launch-exercises.sh
@@ -256,7 +256,7 @@ cd .. && watch -n 5 'kubectl get all -n exercises'
 ```
 d. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-xxx-xxx-124.ip.linodeusercontent.com`
 
-e. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/` 
+e. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/`
 
 ```bash
 # to delete all resources
@@ -306,7 +306,7 @@ kubectl get all | grep mongo
 a. To start a basic mosquitto container with default values and log the configuration file, run:
 ```bash
 # basic mosquitto app with standard conf
-kubectl apply -f k8s/mosquitto-without-volumes.yaml  
+kubectl apply -f k8s/mosquitto-without-volumes.yaml
 
 # log default config
 MOSQUITTO_POD=$(kubectl get pods --no-headers -o custom-columns=":metadata.name" | grep "mosquitto")
@@ -339,16 +339,16 @@ kubectl exec $MOSQUITTO_POD -- sh -c \
 <summary><b>3. Start a Managed k8s cluster on Linode and run a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts</b></summary>
 
 
-a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient. 
+a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient.
 
-b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. Then uninstall minikube and install kubectl manually, otherwise kubectl will be used with the minikube binary resulting in connection errors. 
+b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. Then uninstall minikube and install kubectl manually, otherwise kubectl will be used with the minikube binary resulting in connection errors.
 
 <details closed>
 <summary><b>Click for installation instructions</b></summary>
 
 Installation help: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 ```bash
-minikube stop 
+minikube stop
 minikube delete --all --purge
 # delete alias kubectl="minikube kubectl --" from .bashrc
 vim ~/.bashrc
@@ -357,7 +357,7 @@ sudo rm /usr/local/bin/minikube
 # or remove from debian
 dpkg --remove minikube
 
-# install kubectl 
+# install kubectl
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 ```
@@ -393,7 +393,7 @@ e. Add nginx-ingress-controller to route incoming traffic from Linode's NodeBala
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm install nginx-ingress ingress-nginx/ingress-nginx --version 4.11.2 --set controller.publishService.enabled=true
-# add Linode NodeBalancer hostname to k8s/helm-ingress.yaml 
+# add Linode NodeBalancer hostname to k8s/helm-ingress.yaml
 kubectl apply -f k8s/helm-ingress.yaml
 ```
 
@@ -490,9 +490,9 @@ minikube service node-app-service
 
 NOTE: The microservices app is a google developed multi-language application with service-to-service communication via gRPC. See https://github.com/GoogleCloudPlatform/microservices-demo/tree/main
 
-a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 4GB each on a shared CPU is sufficient. 
+a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 4GB each on a shared CPU is sufficient.
 
-b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. 
+b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data.
 
 Then run:
 ```bash
@@ -521,9 +521,9 @@ a. Simply execute the following command from the git project root directory
 ```bash
 export KUBECONFIG=test-cluster-kubeconfig.yaml
 # install
-bash scripts/helm-install-microservices.sh 
+bash scripts/helm-install-microservices.sh
 # uninstall
-bash scripts/helm-uninstall-microservices.sh 
+bash scripts/helm-uninstall-microservices.sh
 ```
 </details>
 
@@ -588,7 +588,7 @@ stream {
         listen 30080;
         proxy_pass 192.168.49.2:80;
     }
-    
+
     server {
         listen 30443;
         proxy_pass 192.168.49.2:443;
@@ -602,6 +602,6 @@ sudo systemctl restart nginx
 ```
 You can access the plain site http://<REMOTE_ADDRESS>:30080 in a browser from any external device.
 You can access the TLS site https://<REMOTE_ADDRESS>:30443 in a browser from any external device.
-NOTE: HTTPS certificate config to remove security warning is a topic for another day. See potentially https://www.zepworks.com/posts/access-minikube-remotely-kvm/#4-certs or https://minikube.sigs.k8s.io/docs/handbook/untrusted_certs/ 
-    
+NOTE: HTTPS certificate config to remove security warning is a topic for another day. See potentially https://www.zepworks.com/posts/access-minikube-remotely-kvm/#4-certs or https://minikube.sigs.k8s.io/docs/handbook/untrusted_certs/
+
 </details>

@@ -17,10 +17,9 @@ cpuRequested: 100m
 memoryRequested: 128Mi
 cpuLimit: 200m
 memoryLimit: 256Mi
+readinessProbeTimeoutSeconds: 5
 readinessProbeInitialDelay: 5
 readinessProbePeriod: 5
+livenessProbeTimeoutSeconds: 5
 livenessProbeInitialDelay: 5
 livenessProbePeriod: 5
---- 
-
-
