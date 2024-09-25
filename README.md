@@ -3,7 +3,6 @@
 Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps, Secrets, PVCs, StatefulSets, internal & external Services, Ingress to deploy simple web-apps, or more complex microservices on the Linode Managed Kubernetes Engine.
 
 <b><u>The advanced exercise projects are:</u></b>
-*Work in Progress*
 1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - <b>started manually via kubectl apply commands</b>
 2. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - <b>started via shell script running helm charts</b>
 
@@ -15,7 +14,6 @@ Kubernetes manifests, Helmcharts and kubectl scripts for Deployments, ConfigMaps
 5. Deployment of 11 replicated microservices with best-practice configuration via single k8s.yaml file
 6. Deployment of 11 replicated microservices with several helm install commands bundled in a bash script
 7. Deployment of 11 replicated microservices with single helmfile apply command
-
 
 <b><u>The bonus projects are:</u></b>
 1. An ArgoCD deployment in Kubernetes following GitOps principles for declarative configuration versioning and storage.
