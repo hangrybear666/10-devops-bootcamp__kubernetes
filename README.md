@@ -71,22 +71,22 @@ helmfile init
 <details closed>
 <summary><b>0. Test your java / mysql / phpmyadmin application locally with docker-compose </b></summary>
 
-a. Create `.env` file in `java-app/` folder by running the following script, generating random passwords via openssl for you.
+#### a. Create `.env` file in `java-app/` folder by running the following script, generating random passwords via openssl for you.
 ```bash
 cd scripts
 ./create-exercise-env-vars.sh
 ```
 
-b. Add local dns name forwarding to your /etc/hosts file by adding the following entry: `127.0.0.1 my-java-app.com`
+#### b. Add local dns name forwarding to your /etc/hosts file by adding the following entry: `127.0.0.1 my-java-app.com`
 
-d. Navigate to `java-app/` and run
+#### c. Navigate to `java-app/` and run
 ```bash
 VERSION_TAG=1.0 \
 DB_SERVER_OVERRIDE=mysqldb \
 docker compose -f docker-compose-java-app-mysql.yaml up
 ```
 
-d. Navigate to http://localhost:8085/ for phpmyadmin using `DB_USER` and `DB_PWD` for login.
+#### d. Navigate to http://localhost:8085/ for phpmyadmin using `DB_USER` and `DB_PWD` for login.
 Then navigate to http://my-java-app.com/ for your java app.
 </details>
 
@@ -95,18 +95,22 @@ Then navigate to http://my-java-app.com/ for your java app.
 <details closed>
 <summary><b>1. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started manually via kubectl apply commands</b></summary>
 
-a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient.
+#### a. Create an Account on the Linode Cloud
 
-b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data.
+Then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient.
 
-c. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live, then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
+#### b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data.
+
+#### c. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live.
+
+Then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
 ```bash
 # setup docker registry credentials
 aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 010928217051.dkr.ecr.eu-central-1.amazonaws.com
 cp /home/$USER/.docker/config.json config/
 ```
 
-d. Create secret from prior docker login step so kubernetes can pull the AWS ECR image
+#### d. Create secret from prior docker login step so kubernetes can pull the AWS ECR image
 ```bash
 export KUBECONFIG=test-cluster-kubeconfig.yaml
 kubectl create namespace exercises
@@ -118,7 +122,7 @@ kubectl create secret generic aws-ecr-config \
 kubectl get secret aws-ecr-config -n exercises --output="jsonpath={.data.\.dockerconfigjson}" | base64 --decode
 ```
 
-e. Create Secret from `java-app/.env` file created by the `./create-exercise-env-vars.sh` script in exercise step 0)
+#### e. Create Secret from `java-app/.env` file created by the `./create-exercise-env-vars.sh` script in exercise step 0)
 ```bash
 kubectl create secret generic java-app-mysql-env \
 --from-env-file=java-app/.env \
@@ -128,26 +132,30 @@ kubectl get secret java-app-mysql-env -n exercises -o yaml
 
 ```
 
-f. Add nginx-ingress-controller to route incoming traffic from Linode's NodeBalancer to the phpmyadmin & java-app internal ClusterIP Service. Installation of the Helm chart also automatically sets up a NodeBalancer on Linode, the public dns name of which we have to save and replace in `k8s/exercises/01-ingress-configuration.yaml` in the `- host: ` value
+#### f. Add nginx-ingress-controller to route incoming traffic from Linode's NodeBalancer to the phpmyadmin & java-app internal ClusterIP Service.
+
+Installation of the Helm chart also automatically sets up a NodeBalancer on Linode, the public dns name of which we have to save and replace in `k8s/exercises/01-ingress-configuration.yaml` in the `- host: ` value
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 helm install nginx-ingress ingress-nginx/ingress-nginx --version 4.11.2 --namespace exercises
 ```
 
-g. Before building and pushing the docker image to remote, change the HOST variable in line 48 of your `java-app/src/main/resources/static/index.html` to your Linode NodeBalancer DNS Name, for example:
+#### g. Before building and pushing the docker image to remote, change the HOST variable in line 48 of your `java-app/src/main/resources/static/index.html` to your Linode NodeBalancer DNS Name, for example:
 ```js
 const HOST = "172-xxx-xxx-124.ip.linodeusercontent.com";
 ```
 
-h. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
+#### h. Build and Push your java application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
 ```bash
 docker build -t java-app:2.3 java-app/.
 docker tag java-app:2.3 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.3
 docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:java-app-2.3
 ```
 
-i. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume, launch the java application (replicas:2) and start phpmyadmin UI, with an ingress-nginx controller for external access, replace the following values and then run the script.
+#### i. To start mysql StatefulSet (replicas:2), attached to 10GB each of persistent linode block storage volume
+
+Launch the java application (replicas:2) and start phpmyadmin UI, with an ingress-nginx controller for external access, replace the following values and then run the script.
 
 *NOTE: replace image name in `k8s/exercises/01-java-app-deployment.yaml` with your own*
 
@@ -169,9 +177,9 @@ kubectl apply -f k8s/exercises/01-ingress-configuration.yaml
 
 ```
 
-j. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-xxx-xxx-124.ip.linodeusercontent.com`
+#### j. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-xxx-xxx-124.ip.linodeusercontent.com`
 
-k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/`
+#### k. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/`
 
 <details closed>
 <summary><b>Commands to connect to db, debug, delete all resources</b></summary>
@@ -242,19 +250,31 @@ kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --namespace=exercises
 <details closed>
 <summary><b>2. Write & Read (asynchronous row-based) replicated MySQL StatefulSet & PVC Block Storage with replicated SpringBoot Java & phpmyadmin Deployment, accessed via Ingress nginx-controller - started via shell script running helm charts</b></summary>
 
-a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient.
+#### a. Create an Account on the Linode Cloud
 
-b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data.
+Then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient.
 
-c. Navigate to scripts folder and run the shell script providing your AWS ECR url, AWS ECR repo name, NodeBalancer Public DNS, and desired Java Application version. The script then 1) logs in to aws ecr 2) exports kubeconfig 3) creates namespace and secrets 4) installs nginx ingress 5) replaces the index.html HOST address with your Nodebalancer DNS Name 6) builds and pushes the java app image 7) installs the helmchart
+#### b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data.
+
+#### c. Navigate to scripts folder and run the shell script providing your AWS ECR url, AWS ECR repo name, NodeBalancer Public DNS, and desired Java Application version.
+
+<u>The script then</u>
+
+- logs in to aws ecr
+- exports kubeconfig
+- creates namespace and secrets
+- installs nginx ingress
+- replaces the index.html HOST address with your Nodebalancer DNS Name
+- builds and pushes the java app image
+- installs the helmchart
 ```bash
 cd scripts
 ./helm-launch-exercises.sh
 cd .. && watch -n 5 'kubectl get all -n exercises'
 ```
-d. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-xxx-xxx-124.ip.linodeusercontent.com`
+#### d. Access the java application on your Linode NodeBalancer DNS Name's root url  `http://172-xxx-xxx-124.ip.linodeusercontent.com`
 
-e. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/`
+#### e. Access phpmyadmin on your Linode NodeBalancer DNS Name's root url followed by `/phpmyadmin/` including the last forward slash (!) for example `http://172-xxx-xxx-124.ip.linodeusercontent.com/phpmyadmin/`
 
 ```bash
 # to delete all resources
@@ -301,7 +321,7 @@ kubectl get all | grep mongo
 <summary><b>2. Deploy ConfigMap File and Secret File Volume Mounting for initializing containers with custom files</b></summary>
 
 
-a. To start a basic mosquitto container with default values and log the configuration file, run:
+#### a. To start a basic mosquitto container with default values and log the configuration file, run:
 ```bash
 # basic mosquitto app with standard conf
 kubectl apply -f k8s/mosquitto-without-volumes.yaml
@@ -311,7 +331,7 @@ MOSQUITTO_POD=$(kubectl get pods --no-headers -o custom-columns=":metadata.name"
 kubectl exec $MOSQUITTO_POD -- cat /mosquitto/config/mosquitto.conf
 ```
 
-b. To overwrite the mosquitto.conf file and create a secret.file in the containers via Volume mounts, run:
+#### b. To overwrite the mosquitto.conf file and create a secret.file in the containers via Volume mounts, run:
 
 NOTE: replace `-from-literal=secret.file='Password123!'` with your desired password
 ```bash
@@ -337,9 +357,11 @@ kubectl exec $MOSQUITTO_POD -- sh -c \
 <summary><b>3. Start a Managed k8s cluster on Linode and run a replicated StatefulSet application with multiple nodes and attached persistent storage volumes using Helm Charts</b></summary>
 
 
-a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient.
+#### a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 2GB each on a shared CPU is sufficient.
 
-b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data. Then uninstall minikube and install kubectl manually, otherwise kubectl will be used with the minikube binary resulting in connection errors.
+#### b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data.
+
+Then uninstall minikube and install kubectl manually, otherwise kubectl will be used with the minikube binary resulting in connection errors.
 
 <details closed>
 <summary><b>Click for installation instructions</b></summary>
@@ -369,7 +391,7 @@ export KUBECONFIG=test-cluster-kubeconfig.yaml
 kubectl get nodes
 ```
 
-c. Add the helm repo and install a mongodb helm chart. Then connect to the db with a temporary mongo client to test the connection. For reference see https://artifacthub.io/packages/helm/bitnami/mongodb
+#### c. Add the helm repo and install a mongodb helm chart. Then connect to the db with a temporary mongo client to test the connection. For reference see https://artifacthub.io/packages/helm/bitnami/mongodb
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm search repo bitnami/mongodb
@@ -382,12 +404,14 @@ kubectl run --namespace default mongodb-client --rm --tty -i --restart='Never' -
 mongosh admin --host "mongodb-0.mongodb-headless.default.svc.cluster.local:27017,mongodb-1.mongodb-headless.default.svc.cluster.local:27017,mongodb-2.mongodb-headless.default.svc.cluster.local:27017" --authenticationDatabase admin -u root -p $MONGODB_ROOT_PASSWORD
 ```
 
-d. Add a mongo-express container and service listening on port 8081 internally for incoming traffic to render a GUI in browser.
+#### d. Add a mongo-express container and service listening on port 8081 internally for incoming traffic to render a GUI in browser.
 ```bash
 kubectl apply -f k8s/helm-mongo-express.yaml
 ```
 
-e. Add nginx-ingress-controller to route incoming traffic from Linode's NodeBalancer to the mongo-express internal ClusterIP Service. Installation of the Helm chart also automatically sets up a NodeBalancer on Linode, the public dns name of which we have to save and replace in `k8s/helm-ingress.yaml` in the `- host: ` value
+#### e. Add nginx-ingress-controller to route incoming traffic from Linode's NodeBalancer to the mongo-express internal ClusterIP Service. 
+
+Installation of the Helm chart also automatically sets up a NodeBalancer on Linode, the public dns name of which we have to save and replace in `k8s/helm-ingress.yaml` in the `- host: ` value
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm install nginx-ingress ingress-nginx/ingress-nginx --version 4.11.2 --set controller.publishService.enabled=true
@@ -395,7 +419,9 @@ helm install nginx-ingress ingress-nginx/ingress-nginx --version 4.11.2 --set co
 kubectl apply -f k8s/helm-ingress.yaml
 ```
 
-f. Navigate to your Nodebalancer DNS host name to access mongo-express with default credentials `admin` and `pass` to persist data. You can uninstall the database by running `helm uninstall mongodb` then start it back up with the command from step c) and see that data has been persisted in the persistent volume on Linode which are subsequently reattached to their respective pods.
+#### f. Navigate to your Nodebalancer DNS host name to access mongo-express with default credentials `admin` and `pass` to persist data. 
+
+You can uninstall the database by running `helm uninstall mongodb` then start it back up with the command from step c) and see that data has been persisted in the persistent volume on Linode which are subsequently reattached to their respective pods.
 </details>
 
 -----
@@ -403,22 +429,23 @@ f. Navigate to your Nodebalancer DNS host name to access mongo-express with defa
 <details closed>
 <summary><b>4. Deployment of a custom NodeJS-application image published and pulled from AWS ECR, with mongodb and mongo-express pods & services running</b></summary>
 
+#### a. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live
 
-a. Create an Elastic Container Registry (ECR) on AWS for your k8s images to live, then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
+Then retrieve the push commands in aws console and run the docker login command locally to properly setup `/home/$USER/.docker/config.json`. Replace the remote url with your own and then copy the config file to your `config/` folder. It is added to .gitignore, so don't rename it.
 ```bash
 # setup docker registry credentials
 aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 010928217051.dkr.ecr.eu-central-1.amazonaws.com
 cp /home/$USER/.docker/config.json config/
 ```
 
-b. Build and Push your NodeJS application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
+#### b. Build and Push your NodeJS application image to AWS ECR remote repository. Replace the repo url with your own. Current Directory should be the git repo root dir.
 ```bash
 docker build -t node-app:1.5 node-app/.
 docker tag node-app:1.5 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.5
 docker push 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.5
 ```
 
-c. Create secret in k8s cluster with registry credentials
+#### c. Create secret in k8s cluster with registry credentials
 
 Alternative 1 (allowing multiple registries to be added, since they are comma delimited in config file)
 ```bash
@@ -436,7 +463,7 @@ kubectl create secret docker-registry my-registry-key-2 \
     --docker-password=$(aws ecr get-login-password)
 ```
 
-d. Setup environment and container secrets to avoid exposure in SCM. Create an `node-app/app/.env` file and add the following keys, changing credentials to your own:
+#### d. Setup environment and container secrets to avoid exposure in SCM. Create an `node-app/app/.env` file and add the following keys, changing credentials to your own:
 ```bash
 ME_CONFIG_MONGODB_ADMINUSERNAME=admin
 ME_CONFIG_MONGODB_ADMINPASSWORD=password
@@ -456,7 +483,7 @@ docker compose -f node-app/docker-compose.yaml up
 ```
 NOTE: if you are running the docker compose on a remote VPS, you have simply have to copy the `docker-compose.yaml` to your remote via scp and then copy the `node-app/app/.env` file to your remote and create an `app/` folder next to the docker compose file where the `.env` can recide. One additional step is to enter your running node-app docker container via docker exec -it CONTAINER_HASH /bin/sh and execute `vi index.html` and exchange `localhost` with your remote ip, e.g. `64.226.117.247`
 
-e. Replace `image: 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.5` with your own AWS ECR image-tag in the file `k8s/node-app-deployment.yaml` and run the following commands
+#### e. Replace `image: 010928217051.dkr.ecr.eu-central-1.amazonaws.com/k8s-imgs:node-app-1.5` with your own AWS ECR image-tag in the file `k8s/node-app-deployment.yaml` and run the following commands
 
 IMPORTANT: `mongo-root-username` and `mongo-root-password` have to be identical to the ones in your `.env` file from step d)!
 ```bash
@@ -470,7 +497,9 @@ kubectl apply -f k8s/mongo-express.yaml
 kubectl apply -f k8s/node-app-deployment.yaml
 ```
 
-f. Since your ip will differ from mine and also the docker-compose variant and depends on the minikube cluster configuration, we have to exec a shell in the node-app pod and replace `localhost` in `index.html` with our minikube ip and the port with our loadbalancer nodeport
+#### f. Since your ip will differ from mine and also the docker-compose variant and depends on the minikube cluster configuration
+
+We have to exec a shell in the node-app pod and replace `localhost` in `index.html` with our minikube ip and the port with our loadbalancer nodeport
 ```bash
 NODE_APP_POD_NAME=$(kubectl get pods --no-headers -o custom-columns=":metadata.name" | grep "node-app")
 kubectl exec -it $NODE_APP_POD_NAME -- /bin/sh
@@ -485,12 +514,11 @@ minikube service node-app-service
 <details closed>
 <summary><b>5. Deployment of 11 replicated microservices with best-practice configuration via single k8s.yaml file</b></summary>
 
+*NOTE:* The microservices app is a google developed multi-language application with service-to-service communication via gRPC. See https://github.com/GoogleCloudPlatform/microservices-demo/tree/main
 
-NOTE: The microservices app is a google developed multi-language application with service-to-service communication via gRPC. See https://github.com/GoogleCloudPlatform/microservices-demo/tree/main
+#### a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 4GB each on a shared CPU is sufficient.
 
-a. Create an Account on the Linode Cloud and then Create a Kubernetes Cluster https://cloud.linode.com/kubernetes/clusters named `test-cluster` in your Region without High Availability (HA) Control Plane to save costs. Adding 3 Nodes with 4GB each on a shared CPU is sufficient.
-
-b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data.
+#### b. Once the cluster is running, download `test-cluster-kubeconfig.yaml`. If your file is named differently, add it to `.gitignore` as it contains sensitive data.
 
 Then run:
 ```bash
@@ -500,14 +528,14 @@ export KUBECONFIG=test-cluster-kubeconfig.yaml
 kubectl get nodes
 ```
 
-c. Start the microservice application including a LoadBalancer receiving an external DNS Name from your Linode NodeBalancer for public access.
+#### c. Start the microservice application including a LoadBalancer receiving an external DNS Name from your Linode NodeBalancer for public access.
 
 ```bash
 kubectl apply -f k8s/microservices-best-practice.yaml
 #kubectl delete -f k8s/microservices-best-practice.yaml
 ```
 
-d. Navigate to your Nodebalancer DNS host name to access the microservices frontend.
+#### d. Navigate to your Nodebalancer DNS host name to access the microservices frontend.
 </details>
 
 -----
@@ -515,7 +543,7 @@ d. Navigate to your Nodebalancer DNS host name to access the microservices front
 <details closed>
 <summary><b>6. Deployment of 11 replicated microservices with several helm install commands bundled in a bash script</b></summary>
 
-a. Simply execute the following command from the git project root directory
+#### a. Simply execute the following command from the git project root directory
 ```bash
 export KUBECONFIG=test-cluster-kubeconfig.yaml
 # install
@@ -530,7 +558,7 @@ bash scripts/helm-uninstall-microservices.sh
 <details closed>
 <summary><b>7. Deployment of 11 replicated microservices with single helmfile apply command</b></summary>
 
-a. Simply execute the following command from the git project root directory
+#### a. Simply execute the following command from the git project root directory
 
 ```bash
 # install
@@ -555,9 +583,9 @@ helmfile destroy \
 
 See https://argo-cd.readthedocs.io/en/stable/getting_started/
 
-a. Add `ARGOCD_ADMIN_PW=xxx` to `.env` file
+#### a. Add `ARGOCD_ADMIN_PW=xxx` to `.env` file
 
-b. Navigate to `scripts/` folder and execute the installation script.
+#### b. Navigate to `scripts/` folder and execute the installation script.
 ```bash
 ./remote-setup-ArgoCD.sh
 ```
@@ -569,12 +597,12 @@ b. Navigate to `scripts/` folder and execute the installation script.
 <summary><b>2. Setup ingress-nginx for minikube to handle incoming traffic from the outside world into our remote VPS</b></summary>
 See https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
 
-a. Navigate to `scripts/` folder and execute the installation script.
+#### a. Navigate to `scripts/` folder and execute the installation script.
 ```bash
 ./remote-setup-ingress-nginx.sh
 ```
 
-b. Install nginx reverse proxy to forward outside requests to the VPS to the minikube ip address on the ingress controller port. To configure nginx replace `proxy_pass` ip with your minikube ip from the output of step a)
+#### b. Install nginx reverse proxy to forward outside requests to the VPS to the minikube ip address on the ingress controller port. To configure nginx replace `proxy_pass` ip with your minikube ip from the output of step a)
 ```bash
 ssh root@<REMOTE_ADDRESS>
 sudo apt update
